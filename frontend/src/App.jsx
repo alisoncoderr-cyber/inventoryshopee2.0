@@ -58,7 +58,7 @@ function App() {
           {sidebarOpen && (
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1 }}>
-                InvControl
+                Inventário SOCPE-02
               </div>
               <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
                 Logística
@@ -116,6 +116,9 @@ function App() {
             </div>
             <div style={{ fontSize: 10, color: '#334155', marginTop: 2 }}>
               Google Sheets Backend
+            </div>
+            <div style={{ fontSize: 10, color: '#334155', marginTop: 10 }}>
+              Desenvolvido por Alison - cop.
             </div>
           </div>
         )}

@@ -4,7 +4,7 @@
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
-import { createDevice, updateDevice } from '../services/api';
+import { createDevice, createDevicesBulk, updateDevice } from '../services/api';
 import { EQUIPMENT_TYPES, STATUS_OPTIONS, SECTORS } from '../utils/constants';
 
 const inputStyle = {
@@ -42,6 +42,7 @@ const Field = ({ label, required, children }) => (
 
 const DeviceForm = ({ device, onClose, onSuccess }) => {
   const isEditing = Boolean(device?.id);
+  const isCreating = !isEditing;
 
   const [formData, setFormData] = useState({
     nome_dispositivo: '',
@@ -59,6 +60,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+  const [bulkSerials, setBulkSerials] = useState('');
 
   // Preenche o formulário em modo edição
   useEffect(() => {
@@ -75,6 +77,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
         data_aquisicao: device.data_aquisicao || '',
         observacoes: device.observacoes || '',
       });
+      setBulkSerials('');
     }
   }, [device]);
 
@@ -84,15 +87,39 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
+  const getBulkSerialList = () => {
+    return bulkSerials
+      .split(/\r?\n/)
+      .map((serial) => serial.trim())
+      .filter(Boolean);
+  };
+
   const validate = () => {
-    const required = ['nome_dispositivo', 'tipo', 'marca', 'modelo', 'numero_serie', 'setor'];
+    const required = ['nome_dispositivo', 'tipo', 'marca', 'modelo', 'setor'];
     const newErrors = {};
     required.forEach((field) => {
       if (!formData[field]?.trim()) {
         newErrors[field] = 'Campo obrigatório';
       }
     });
+    if (!formData.numero_serie?.trim() && getBulkSerialList().length === 0) {
+      newErrors.numero_serie = 'Informe um nÃºmero de sÃ©rie ou preencha a lista em lote';
+    }
+
     return newErrors;
+  };
+
+  const buildBulkDevices = () => {
+    const serialList = getBulkSerialList();
+
+    if (serialList.length === 0) {
+      return [formData];
+    }
+
+    return serialList.map((serial) => ({
+      ...formData,
+      numero_serie: serial,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -110,7 +137,13 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
       if (isEditing) {
         await updateDevice(device.id, formData);
       } else {
-        await createDevice(formData);
+        const devicesToCreate = buildBulkDevices();
+
+        if (devicesToCreate.length === 1) {
+          await createDevice(devicesToCreate[0]);
+        } else {
+          await createDevicesBulk(devicesToCreate);
+        }
       }
       onSuccess();
     } catch (err) {
@@ -306,6 +339,22 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                 />
               </Field>
             </div>
+
+            {isCreating && (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Field label="NÃºmeros de SÃ©rie em Lote">
+                  <textarea
+                    style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }}
+                    value={bulkSerials}
+                    onChange={(e) => setBulkSerials(e.target.value)}
+                    placeholder={'Ex:\nSN123456\nSN123457\nSN123458'}
+                  />
+                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+                    Cole um nÃºmero de sÃ©rie por linha para cadastrar vÃ¡rios equipamentos de uma vez. Se deixar vazio, o sistema usarÃ¡ o campo de nÃºmero de sÃ©rie individual.
+                  </div>
+                </Field>
+              </div>
+            )}
           </div>
 
           {/* Botões */}

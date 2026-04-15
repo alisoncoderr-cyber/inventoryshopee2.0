@@ -24,16 +24,15 @@ export const EQUIPMENT_TYPES = [
 export const STATUS_OPTIONS = ['Ativo', 'Em manutenção', 'Inativo'];
 
 export const SECTORS = [
-  'Recebimento',
+  'Esteira',
   'Expedição',
-  'Armazenagem',
+  'Recebimento',
+  'Operação',
   'TI',
-  'Administração',
-  'Operações',
-  'Qualidade',
-  'Manutenção',
-  'RH',
-  'Financeiro',
+  'ADM',
+  'COP',
+  'Security',
+  'Fullfilment',
 ];
 
 export const STATUS_COLORS = {

@@ -9,9 +9,29 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { fetchDashboardStats } from '../services/api';
+import { SECTORS } from '../utils/constants';
 
 // Paleta de cores para os gráficos
 const CHART_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#0891b2', '#9333ea', '#d97706'];
+
+const SECTOR_ALIASES = {
+  'Expedição': 'Expedição',
+  'Expedicao': 'Expedição',
+  'Recebimento': 'Recebimento',
+  'Operações': 'Operação',
+  'Operacoes': 'Operação',
+  'Operação': 'Operação',
+  'Armazenagem': 'Fullfilment',
+  'Administração': 'ADM',
+  'Administracao': 'ADM',
+  'COP': 'COP',
+  'Security': 'Security',
+  'TI': 'TI',
+  'Esteira': 'Esteira',
+  'Fullfilment': 'Fullfilment',
+  'Fulfillment': 'Fullfilment',
+  'ADM': 'ADM',
+};
 
 const StatCard = ({ title, value, icon, color, subtitle }) => (
   <div style={{
@@ -80,8 +100,15 @@ const Dashboard = () => {
   if (!stats) return null;
 
   // Dados para o gráfico de setores
-  const setorData = Object.entries(stats.por_setor || {})
-    .map(([name, value]) => ({ name, value }))
+  const normalizedSectorTotals = Object.entries(stats.por_setor || {}).reduce((acc, [name, value]) => {
+    const normalizedName = SECTOR_ALIASES[name] || name;
+    acc[normalizedName] = (acc[normalizedName] || 0) + value;
+    return acc;
+  }, {});
+
+  const setorData = SECTORS
+    .map((name) => ({ name, value: normalizedSectorTotals[name] || 0 }))
+    .filter(({ value }) => value > 0)
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
 

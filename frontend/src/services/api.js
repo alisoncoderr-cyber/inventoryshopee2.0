@@ -62,6 +62,21 @@ export const createDevice = async (deviceData) => {
 };
 
 /**
+ * Cria varios equipamentos em sequencia
+ * @param {Array} devicesData - Lista de equipamentos
+ */
+export const createDevicesBulk = async (devicesData = []) => {
+  const results = [];
+
+  for (const deviceData of devicesData) {
+    const response = await createDevice(deviceData);
+    results.push(response);
+  }
+
+  return results;
+};
+
+/**
  * Atualiza um equipamento existente
  * @param {string} id - ID do equipamento
  * @param {Object} deviceData - Dados atualizados
