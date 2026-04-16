@@ -1,11 +1,11 @@
 // ============================================================
 // components/DeviceForm.jsx
-// Formulário de criação e edição de equipamentos
+// Formulario de criacao e edicao de equipamentos
 // ============================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createDevice, createDevicesBulk, updateDevice } from '../services/api';
-import { EQUIPMENT_TYPES, STATUS_OPTIONS, SECTORS } from '../utils/constants';
+import { EQUIPMENT_TYPES, SECTORS, STATUS_OPTIONS } from '../utils/constants';
 
 const inputStyle = {
   width: '100%',
@@ -43,6 +43,7 @@ const Field = ({ label, required, children }) => (
 const DeviceForm = ({ device, onClose, onSuccess }) => {
   const isEditing = Boolean(device?.id);
   const isCreating = !isEditing;
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   const [formData, setFormData] = useState({
     nome_dispositivo: '',
@@ -62,7 +63,12 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   const [apiError, setApiError] = useState('');
   const [bulkSerials, setBulkSerials] = useState('');
 
-  // Preenche o formulário em modo edição
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     if (device) {
       setFormData({
@@ -81,32 +87,33 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     }
   }, [device]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const getBulkSerialList = () => {
-    return bulkSerials
+  const getBulkSerialList = () =>
+    bulkSerials
       .split(/\r?\n/)
       .map((serial) => serial.trim())
       .filter(Boolean);
-  };
 
   const validate = () => {
     const required = ['nome_dispositivo', 'tipo', 'marca', 'modelo', 'setor'];
-    const newErrors = {};
+    const nextErrors = {};
+
     required.forEach((field) => {
       if (!formData[field]?.trim()) {
-        newErrors[field] = 'Campo obrigatório';
+        nextErrors[field] = 'Campo obrigatorio';
       }
     });
+
     if (!formData.numero_serie?.trim() && getBulkSerialList().length === 0) {
-      newErrors.numero_serie = 'Informe um nÃºmero de sÃ©rie ou preencha a lista em lote';
+      nextErrors.numero_serie = 'Informe um numero de serie ou preencha a lista em lote';
     }
 
-    return newErrors;
+    return nextErrors;
   };
 
   const buildBulkDevices = () => {
@@ -122,9 +129,10 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     const validationErrors = validate();
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -145,6 +153,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
           await createDevicesBulk(devicesToCreate);
         }
       }
+
       onSuccess();
     } catch (err) {
       setApiError(err.message || 'Erro ao salvar equipamento');
@@ -154,60 +163,88 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   };
 
   return (
-    // Overlay
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: 16
-    }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: 16,
+      }}
+      onClick={(event) => event.target === event.currentTarget && onClose()}
     >
-      {/* Modal */}
-      <div style={{
-        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 680,
-        maxHeight: '90vh', overflow: 'auto',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-      }}>
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '20px 24px', borderBottom: '1px solid #f3f4f6',
-          position: 'sticky', top: 0, background: '#fff', zIndex: 1,
-        }}>
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 14,
+          width: '100%',
+          maxWidth: 680,
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: isMobile ? '16px 16px 14px' : '20px 24px',
+            borderBottom: '1px solid #f3f4f6',
+            position: 'sticky',
+            top: 0,
+            background: '#fff',
+            zIndex: 1,
+          }}
+        >
           <div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>
-              {isEditing ? '✏️ Editar Equipamento' : '➕ Novo Equipamento'}
+              {isEditing ? 'Editar Equipamento' : 'Novo Equipamento'}
             </h2>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: '#6b7280' }}>
-              {isEditing ? 'Atualize os dados do equipamento' : 'Preencha os dados para cadastrar'}
+              {isEditing ? 'Atualize os dados do equipamento.' : 'Preencha os dados para cadastrar.'}
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              border: 'none', background: '#f3f4f6', borderRadius: 8,
-              width: 32, height: 32, cursor: 'pointer', fontSize: 16,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none',
+              background: '#f3f4f6',
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              cursor: 'pointer',
+              fontSize: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            ✕
+            x
           </button>
         </div>
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+        <form onSubmit={handleSubmit} style={{ padding: isMobile ? 16 : 24 }}>
           {apiError && (
-            <div style={{
-              background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8,
-              padding: 12, marginBottom: 20, color: '#dc2626', fontSize: 13
-            }}>
-              ❌ {apiError}
+            <div
+              style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: 8,
+                padding: 12,
+                marginBottom: 20,
+                color: '#dc2626',
+                fontSize: 13,
+              }}
+            >
+              Erro: {apiError}
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
-            {/* Nome do Dispositivo */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <Field label="Nome do Dispositivo" required>
                 <input
@@ -217,13 +254,10 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                   onChange={handleChange}
                   placeholder="Ex: PDA-001, Desktop-Recebimento-01"
                 />
-                {errors.nome_dispositivo && (
-                  <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.nome_dispositivo}</span>
-                )}
+                {errors.nome_dispositivo && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.nome_dispositivo}</span>}
               </Field>
             </div>
 
-            {/* Tipo */}
             <Field label="Tipo de Equipamento" required>
               <select
                 style={{ ...inputStyle, borderColor: errors.tipo ? '#ef4444' : '#d1d5db' }}
@@ -232,28 +266,25 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                 onChange={handleChange}
               >
                 <option value="">Selecione o tipo</option>
-                {EQUIPMENT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {EQUIPMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
                 ))}
               </select>
               {errors.tipo && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.tipo}</span>}
             </Field>
 
-            {/* Status */}
             <Field label="Status">
-              <select
-                style={inputStyle}
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+              <select style={inputStyle} name="status" value={formData.status} onChange={handleChange}>
+                {STATUS_OPTIONS.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
                 ))}
               </select>
             </Field>
 
-            {/* Marca */}
             <Field label="Marca" required>
               <input
                 style={{ ...inputStyle, borderColor: errors.marca ? '#ef4444' : '#d1d5db' }}
@@ -265,7 +296,6 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               {errors.marca && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.marca}</span>}
             </Field>
 
-            {/* Modelo */}
             <Field label="Modelo" required>
               <input
                 style={{ ...inputStyle, borderColor: errors.modelo ? '#ef4444' : '#d1d5db' }}
@@ -277,8 +307,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               {errors.modelo && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.modelo}</span>}
             </Field>
 
-            {/* Número de Série */}
-            <Field label="Número de Série" required>
+            <Field label="Numero de Serie" required>
               <input
                 style={{ ...inputStyle, borderColor: errors.numero_serie ? '#ef4444' : '#d1d5db' }}
                 name="numero_serie"
@@ -289,7 +318,6 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               {errors.numero_serie && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.numero_serie}</span>}
             </Field>
 
-            {/* Setor */}
             <Field label="Setor" required>
               <select
                 style={{ ...inputStyle, borderColor: errors.setor ? '#ef4444' : '#d1d5db' }}
@@ -298,15 +326,16 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                 onChange={handleChange}
               >
                 <option value="">Selecione o setor</option>
-                {SECTORS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                {SECTORS.map((sector) => (
+                  <option key={sector} value={sector}>
+                    {sector}
+                  </option>
                 ))}
               </select>
               {errors.setor && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.setor}</span>}
             </Field>
 
-            {/* Ticket de Manutenção */}
-            <Field label="Ticket de Manutenção">
+            <Field label="Ticket de Manutencao">
               <input
                 style={inputStyle}
                 name="ticket"
@@ -316,59 +345,64 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               />
             </Field>
 
-            {/* Data de Aquisição */}
-            <Field label="Data de Aquisição">
-              <input
-                style={inputStyle}
-                type="date"
-                name="data_aquisicao"
-                value={formData.data_aquisicao}
-                onChange={handleChange}
-              />
+            <Field label="Data de Aquisicao">
+              <input style={inputStyle} type="date" name="data_aquisicao" value={formData.data_aquisicao} onChange={handleChange} />
             </Field>
 
-            {/* Observações */}
             <div style={{ gridColumn: '1 / -1' }}>
-              <Field label="Observações">
+              <Field label="Observacoes">
                 <textarea
                   style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
                   name="observacoes"
                   value={formData.observacoes}
                   onChange={handleChange}
-                  placeholder="Informações adicionais sobre o equipamento..."
+                  placeholder="Informacoes adicionais sobre o equipamento..."
                 />
               </Field>
             </div>
 
             {isCreating && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="NÃºmeros de SÃ©rie em Lote">
+                <Field label="Numeros de Serie em Lote">
                   <textarea
                     style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }}
                     value={bulkSerials}
-                    onChange={(e) => setBulkSerials(e.target.value)}
+                    onChange={(event) => setBulkSerials(event.target.value)}
                     placeholder={'Ex:\nSN123456\nSN123457\nSN123458'}
                   />
                   <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
-                    Cole um nÃºmero de sÃ©rie por linha para cadastrar vÃ¡rios equipamentos de uma vez. Se deixar vazio, o sistema usarÃ¡ o campo de nÃºmero de sÃ©rie individual.
+                    Cole um numero de serie por linha para cadastrar varios equipamentos de uma vez.
                   </div>
                 </Field>
               </div>
             )}
           </div>
 
-          {/* Botões */}
-          <div style={{
-            display: 'flex', gap: 12, justifyContent: 'flex-end',
-            marginTop: 24, paddingTop: 20, borderTop: '1px solid #f3f4f6'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 12,
+              justifyContent: 'flex-end',
+              flexDirection: isMobile ? 'column-reverse' : 'row',
+              marginTop: 24,
+              paddingTop: 20,
+              borderTop: '1px solid #f3f4f6',
+            }}
+          >
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: '10px 20px', borderRadius: 8, border: '1px solid #d1d5db',
-                background: '#fff', color: '#374151', cursor: 'pointer',
-                fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
+                padding: '10px 20px',
+                borderRadius: 8,
+                border: '1px solid #d1d5db',
+                background: '#fff',
+                color: '#374151',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                width: isMobile ? '100%' : 'auto',
               }}
             >
               Cancelar
@@ -377,14 +411,23 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               type="submit"
               disabled={loading}
               style={{
-                padding: '10px 24px', borderRadius: 8, border: 'none',
+                padding: '10px 24px',
+                borderRadius: 8,
+                border: 'none',
                 background: loading ? '#9ca3af' : '#2563eb',
-                color: '#fff', cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
-                display: 'flex', alignItems: 'center', gap: 8,
+                color: '#fff',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
               }}
             >
-              {loading ? '⏳ Salvando...' : (isEditing ? '✅ Salvar Alterações' : '➕ Cadastrar')}
+              {loading ? 'Salvando...' : isEditing ? 'Salvar Alteracoes' : 'Cadastrar'}
             </button>
           </div>
         </form>

@@ -2,12 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Reset de estilos globais
 const globalStyles = `
   *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; padding: 0; background: #f1f5f9; }
+  html, body, #root { min-height: 100%; }
+  body { margin: 0; padding: 0; background: #f1f5f9; overflow-x: hidden; }
   button { font-family: inherit; }
   input, select, textarea { font-family: inherit; }
+  table { border-spacing: 0; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: #f1f5f9; }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }

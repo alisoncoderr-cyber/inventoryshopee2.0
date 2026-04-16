@@ -301,15 +301,31 @@ A planilha é criada automaticamente com os seguintes cabeçalhos:
 
 ## 🚀 Deploy em Produção
 
-### Backend (Railway, Render, etc.)
-1. Faça push para um repositório Git
-2. Configure as variáveis de ambiente na plataforma
-3. O servidor inicia com `npm start`
+O caminho mais estável para este projeto é:
 
-### Frontend (Vercel, Netlify, etc.)
-1. Configure `REACT_APP_API_URL` apontando para o backend em produção
-2. Build com `npm run build`
-3. Deploy da pasta `build/`
+- Frontend no Vercel
+- Backend no Render
+
+Arquivos de apoio já preparados no repositório:
+
+- `frontend/vercel.json`
+- `backend/.env.example`
+- `render.yaml`
+- `DEPLOY.md`
+
+### Backend (Render)
+1. Faça push para um repositório Git
+2. Crie um Web Service com `Root Directory = backend`
+3. Configure as variáveis de ambiente da service account e da planilha
+4. Inicie com `npm start`
+
+### Frontend (Vercel)
+1. Importe o mesmo repositório no Vercel
+2. Defina `Root Directory = frontend`
+3. Configure `REACT_APP_API_URL` apontando para o backend em produção
+4. Faça o deploy
+
+Veja o passo a passo completo em `DEPLOY.md`.
 
 ---
 
