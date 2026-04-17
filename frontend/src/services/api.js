@@ -24,7 +24,7 @@ const resolveApiBaseUrl = () => {
   }
 
   if (hostname.endsWith('.vercel.app')) {
-    return '/api';
+    return DEFAULT_PRODUCTION_API_URL;
   }
 
   return DEFAULT_PRODUCTION_API_URL;

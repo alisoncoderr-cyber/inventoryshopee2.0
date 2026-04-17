@@ -16,35 +16,9 @@ const PORT = process.env.PORT || 3001;
 // MIDDLEWARES GLOBAIS
 // ============================================================
 
-const allowedOrigins = (
-  process.env.ALLOWED_ORIGINS ||
-  'http://localhost:3000,http://127.0.0.1:3000,https://inventoryshopee2-0.vercel.app'
-)
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const isAllowedOrigin = (origin) => {
-  if (!origin) {
-    return true;
-  }
-
-  if (allowedOrigins.includes(origin)) {
-    return true;
-  }
-
-  return /\.vercel\.app$/.test(origin);
-};
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origem nao permitida pelo CORS: ${origin}`));
-      }
-    },
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
