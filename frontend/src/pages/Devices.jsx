@@ -18,7 +18,7 @@ const sortDevices = (items, sortBy) => {
 };
 
 const downloadCsv = (rows) => {
-  const headers = ['Nome', 'Tipo', 'Marca', 'Modelo', 'Numero de Serie', 'Setor', 'Status', 'Ticket', 'Pessoa Atribuida', 'Data Cadastro'];
+  const headers = ['Identificacao', 'Categoria', 'Marca', 'Modelo', 'Numero de Serie', 'Setor', 'Status', 'Ticket', 'Pessoa Atribuida', 'Data Cadastro'];
   const csvLines = [headers.join(';'), ...rows.map((d) => [d.nome_dispositivo, d.tipo, d.marca, d.modelo, d.numero_serie, d.setor, d.status, d.ticket, d.pessoa_atribuida, d.data_cadastro].map((v) => `"${String(v || '').replace(/"/g, '""')}"`).join(';'))];
   const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -224,7 +224,7 @@ const Devices = () => {
           {loading ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#111' }}>Carregando base operacional...</div> : devices.length === 0 ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#111' }}>Nenhum equipamento encontrado com os filtros atuais.</div> : (
             <div style={{ overflowX: 'auto', background: '#111' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
-                <thead><tr style={{ background: '#191919' }}>{['Equipamento', 'Tipo', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.06em' }}>{header}</th>)}</tr></thead>
+                <thead><tr style={{ background: '#191919' }}>{['Identificacao', 'Categoria', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.06em' }}>{header}</th>)}</tr></thead>
                 <tbody>
                   {devices.map((device, index) => (
                     <tr key={device.id} style={{ background: index % 2 === 0 ? '#111' : '#151515', borderTop: '1px solid rgba(255,255,255,.06)' }}>

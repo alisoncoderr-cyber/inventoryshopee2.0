@@ -29,8 +29,8 @@ const HEADERS = [
 
 const HEADER_LABELS = [
   'ID',
-  'Nome do Dispositivo',
-  'Tipo',
+  'Identificacao',
+  'Categoria',
   'Marca',
   'Modelo',
   'Numero de Serie',

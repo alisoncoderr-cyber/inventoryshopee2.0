@@ -262,7 +262,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
             <div style={{ gridColumn: '1 / -1' }}>
-              <Field label="Nome do Dispositivo" required>
+              <Field label="Identificacao" required>
                 <input
                   style={{ ...inputStyle, borderColor: errors.nome_dispositivo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                   name="nome_dispositivo"
@@ -274,7 +274,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               </Field>
             </div>
 
-            <Field label="Tipo de Equipamento" required>
+            <Field label="Categoria" required>
               <select
                 style={{ ...inputStyle, borderColor: errors.tipo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="tipo"
