@@ -52,6 +52,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     modelo: '',
     numero_serie: '',
     setor: '',
+    pessoa_atribuida: '',
     status: 'Ativo',
     ticket: '',
     data_aquisicao: '',
@@ -78,6 +79,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
         modelo: device.modelo || '',
         numero_serie: device.numero_serie || '',
         setor: device.setor || '',
+        pessoa_atribuida: device.pessoa_atribuida || '',
         status: device.status || 'Ativo',
         ticket: device.ticket || '',
         data_aquisicao: device.data_aquisicao || '',
@@ -89,7 +91,17 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      if (name === 'tipo') {
+        return {
+          ...prev,
+          [name]: value,
+          pessoa_atribuida: value === 'Laptop' ? prev.pessoa_atribuida : '',
+        };
+      }
+
+      return { ...prev, [name]: value };
+    });
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
@@ -128,6 +140,8 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
       numero_serie: serial,
     }));
   };
+
+  const showAssignedPersonField = formData.tipo === 'Laptop';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -335,6 +349,18 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               {errors.setor && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.setor}</span>}
             </Field>
 
+            {showAssignedPersonField && (
+              <Field label="Pessoa Atribuida">
+                <input
+                  style={inputStyle}
+                  name="pessoa_atribuida"
+                  value={formData.pessoa_atribuida}
+                  onChange={handleChange}
+                  placeholder="Ex: Joao Silva"
+                />
+              </Field>
+            )}
+
             <Field label="Ticket de Manutencao">
               <input
                 style={inputStyle}
@@ -371,7 +397,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                     placeholder={'Ex:\nSN123456\nSN123457\nSN123458'}
                   />
                   <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
-                    Cole um numero de serie por linha para cadastrar varios equipamentos de uma vez.
+                    Cole um numero de serie por linha para cadastrar varios equipamentos de uma vez em uma unica operacao.
                   </div>
                 </Field>
               </div>

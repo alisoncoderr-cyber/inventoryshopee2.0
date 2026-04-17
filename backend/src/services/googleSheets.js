@@ -117,7 +117,10 @@ const HEADERS = [
   'data_aquisicao',
   'data_cadastro',
   'observacoes',
+  'pessoa_atribuida',
 ];
+
+const normalizeSerial = (value = '') => String(value).trim().toLowerCase();
 
 /**
  * Converte uma linha do Sheets (array) em objeto JavaScript
@@ -150,7 +153,7 @@ const getAllDevices = async () => {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:L'),
+    range: getSheetRange('A:M'),
   });
 
   const rows = response.data.values || [];
@@ -169,6 +172,21 @@ const getAllDevices = async () => {
 const getDeviceById = async (id) => {
   const devices = await getAllDevices();
   return devices.find((d) => d.id === id) || null;
+};
+
+const findDeviceBySerial = async (serial, ignoreId = null) => {
+  if (!serial) return null;
+
+  const devices = await getAllDevices();
+  const normalized = normalizeSerial(serial);
+
+  return (
+    devices.find(
+      (device) =>
+        normalizeSerial(device.numero_serie) === normalized &&
+        device.id !== ignoreId
+    ) || null
+  );
 };
 
 /**
@@ -206,7 +224,7 @@ const initializeSheet = async () => {
   // Verifica se já existe cabeçalho
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A1:L1'),
+    range: getSheetRange('A1:M1'),
   });
 
   const existingHeaders = response.data.values?.[0] || [];
@@ -215,7 +233,7 @@ const initializeSheet = async () => {
     // Cria os cabeçalhos
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: getSheetRange('A1:L1'),
+      range: getSheetRange('A1:M1'),
       valueInputOption: 'RAW',
       requestBody: {
         values: [HEADERS],
@@ -238,7 +256,7 @@ const createDevice = async (device) => {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:L'),
+    range: getSheetRange('A:M'),
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
@@ -247,6 +265,23 @@ const createDevice = async (device) => {
   });
 
   return device;
+};
+
+const createDevicesBulk = async (devices) => {
+  const sheets = await getSheetsClient();
+  const rows = devices.map(objectToRow);
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: getSheetRange('A:M'),
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: rows,
+    },
+  });
+
+  return devices;
 };
 
 /**
@@ -261,7 +296,7 @@ const updateDevice = async (id, updatedData) => {
   // Busca todas as linhas para encontrar o índice
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:L'),
+    range: getSheetRange('A:M'),
   });
 
   const rows = response.data.values || [];
@@ -281,7 +316,7 @@ const updateDevice = async (id, updatedData) => {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange(`A${sheetRowNumber}:L${sheetRowNumber}`),
+    range: getSheetRange(`A${sheetRowNumber}:M${sheetRowNumber}`),
     valueInputOption: 'RAW',
     requestBody: {
       values: [updatedRow],
@@ -349,7 +384,9 @@ const deleteDevice = async (id) => {
 module.exports = {
   getAllDevices,
   getDeviceById,
+  findDeviceBySerial,
   createDevice,
+  createDevicesBulk,
   updateDevice,
   deleteDevice,
   initializeSheet,

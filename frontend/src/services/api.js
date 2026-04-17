@@ -66,14 +66,8 @@ export const createDevice = async (deviceData) => {
  * @param {Array} devicesData - Lista de equipamentos
  */
 export const createDevicesBulk = async (devicesData = []) => {
-  const results = [];
-
-  for (const deviceData of devicesData) {
-    const response = await createDevice(deviceData);
-    results.push(response);
-  }
-
-  return results;
+  const response = await api.post('/devices/bulk', { devices: devicesData });
+  return response.data;
 };
 
 /**

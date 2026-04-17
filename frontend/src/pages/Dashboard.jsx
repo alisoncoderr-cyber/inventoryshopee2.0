@@ -1,85 +1,98 @@
 // ============================================================
 // pages/Dashboard.jsx
-// Pagina principal com metricas e graficos
+// Pagina principal com metricas, insights e graficos
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { fetchDashboardStats } from '../services/api';
-import { SECTORS } from '../utils/constants';
 
-const CHART_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#0891b2', '#9333ea', '#d97706'];
+const CHART_COLORS = ['#2563eb', '#0f766e', '#f59e0b', '#9333ea', '#dc2626', '#0891b2', '#4f46e5', '#7c2d12'];
 
-const SECTOR_ALIASES = {
-  'Expedição': 'Expedicao',
-  Expedicao: 'Expedicao',
-  Recebimento: 'Recebimento',
-  'Operações': 'Operacao',
-  Operacoes: 'Operacao',
-  'Operação': 'Operacao',
-  Armazenagem: 'Fullfilment',
-  'Administração': 'ADM',
-  Administracao: 'ADM',
-  COP: 'COP',
-  Security: 'Security',
-  TI: 'TI',
-  Esteira: 'Esteira',
-  Fullfilment: 'Fullfilment',
-  Fulfillment: 'Fullfilment',
-  ADM: 'ADM',
+const cardStyle = {
+  background: '#ffffff',
+  borderRadius: 20,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 18px 45px rgba(15, 23, 42, 0.06)',
 };
 
-const EquipmentBadgeIcon = ({ color, children }) => (
+const StatCard = ({ title, value, helper, accent, icon }) => (
   <div
     style={{
-      width: 48,
-      height: 48,
-      borderRadius: 10,
-      background: `${color}18`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 20,
-      flexShrink: 0,
-      color,
+      ...cardStyle,
+      padding: 22,
+      position: 'relative',
+      overflow: 'hidden',
+      minHeight: 148,
     }}
   >
-    {children}
+    <div
+      style={{
+        position: 'absolute',
+        inset: 'auto -40px -40px auto',
+        width: 120,
+        height: 120,
+        borderRadius: '50%',
+        background: `${accent}16`,
+      }}
+    />
+    <div
+      style={{
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `${accent}12`,
+        color: accent,
+        fontWeight: 700,
+        marginBottom: 20,
+      }}
+    >
+      {icon}
+    </div>
+    <div style={{ fontSize: 30, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{value}</div>
+    <div style={{ marginTop: 10, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{title}</div>
+    <div style={{ marginTop: 6, fontSize: 12, color: '#64748b' }}>{helper}</div>
   </div>
 );
 
-const StatCard = ({ title, value, icon, color, subtitle }) => (
+const InsightItem = ({ label, value, tone }) => (
   <div
     style={{
-      background: '#fff',
-      borderRadius: 12,
-      padding: '24px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-      borderLeft: `4px solid ${color}`,
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 16,
-      flex: 1,
-      minWidth: 180,
+      padding: '14px 16px',
+      borderRadius: 14,
+      background: tone.background,
+      border: `1px solid ${tone.border}`,
     }}
   >
-    <EquipmentBadgeIcon color={color}>{icon}</EquipmentBadgeIcon>
-    <div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{title}</div>
-      {subtitle && <div style={{ fontSize: 11, color, marginTop: 2, fontWeight: 600 }}>{subtitle}</div>}
+    <div style={{ fontSize: 12, fontWeight: 700, color: tone.labelColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      {label}
     </div>
+    <div style={{ marginTop: 6, fontSize: 20, fontWeight: 800, color: tone.valueColor }}>{value}</div>
   </div>
 );
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [error, setError] = useState('');
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -88,10 +101,11 @@ const Dashboard = () => {
     const loadStats = async () => {
       try {
         setLoading(true);
+        setError('');
         const result = await fetchDashboardStats();
         setStats(result.data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Erro ao carregar dashboard');
       } finally {
         setLoading(false);
       }
@@ -100,17 +114,35 @@ const Dashboard = () => {
     loadStats();
   }, []);
 
+  const setorData = useMemo(
+    () =>
+      Object.entries(stats?.por_setor || {})
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 7),
+    [stats]
+  );
+
+  const tipoData = useMemo(
+    () =>
+      Object.entries(stats?.por_tipo || {})
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6),
+    [stats]
+  );
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: '#6b7280' }}>
-        <div style={{ textAlign: 'center' }}>Carregando dashboard...</div>
+      <div style={{ ...cardStyle, padding: 32, textAlign: 'center', color: '#64748b' }}>
+        Carregando dashboard executivo...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 16, color: '#dc2626' }}>
+      <div style={{ ...cardStyle, padding: 24, color: '#b91c1c', background: '#fef2f2', borderColor: '#fecaca' }}>
         Erro ao carregar dashboard: {error}
       </div>
     );
@@ -118,162 +150,246 @@ const Dashboard = () => {
 
   if (!stats) return null;
 
-  const normalizedSectorTotals = Object.entries(stats.por_setor || {}).reduce((acc, [name, value]) => {
-    const normalizedName = SECTOR_ALIASES[name] || name;
-    acc[normalizedName] = (acc[normalizedName] || 0) + value;
-    return acc;
-  }, {});
-
-  const setorData = SECTORS
-    .concat(['Operacao', 'Expedicao'])
-    .filter((value, index, array) => array.indexOf(value) === index)
-    .map((name) => ({ name, value: normalizedSectorTotals[name] || 0 }))
-    .filter(({ value }) => value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
-
-  const tipoData = Object.entries(stats.por_tipo || {})
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
-
-  const atualPct = stats.total > 0 ? Math.round((stats.ativos / stats.total) * 100) : 0;
+  const topSector = setorData[0];
+  const topType = tipoData[0];
+  const maintenanceRate = stats.total ? `${Math.round((stats.em_manutencao / stats.total) * 100)}%` : '0%';
 
   return (
-    <div>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Dashboard</h1>
-        <p style={{ color: '#6b7280', margin: '4px 0 0', fontSize: 14 }}>Visao geral do inventario de equipamentos</p>
-      </div>
+    <div style={{ display: 'grid', gap: 22 }}>
+      <section
+        style={{
+          ...cardStyle,
+          padding: isMobile ? 24 : 32,
+          background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 56%, #38bdf8 100%)',
+          color: '#ffffff',
+          overflow: 'hidden',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            right: -40,
+            top: -40,
+            width: 220,
+            height: 220,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)',
+          }}
+        />
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ maxWidth: 620 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bfdbfe' }}>
+              Inventory Command Center
+            </div>
+            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.1 }}>
+              Painel operacional para leitura rapida do inventario
+            </h1>
+            <p style={{ margin: 0, maxWidth: 560, color: '#dbeafe', fontSize: 14, lineHeight: 1.7 }}>
+              Consolidei indicadores, destaquei alertas reais da operacao e organizei o dashboard para o gestor identificar volume, manutencao, tickets e distribuicao sem precisar navegar demais.
+            </p>
+          </div>
 
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-        <StatCard title="Total de Equipamentos" value={stats.total} icon="Eq" color="#2563eb" subtitle="inventario completo" />
-        <StatCard title="Ativos" value={stats.ativos} icon="✓" color="#16a34a" subtitle={`${atualPct}% do total`} />
-        <StatCard title="Em Manutencao" value={stats.em_manutencao} icon="🛠" color="#d97706" subtitle="aguardando retorno" />
-        <StatCard title="Inativos" value={stats.inativos} icon="✕" color="#dc2626" subtitle="fora de operacao" />
-      </div>
+          <div
+            style={{
+              minWidth: isMobile ? '100%' : 260,
+              maxWidth: 300,
+              padding: 18,
+              borderRadius: 18,
+              background: 'rgba(15, 23, 42, 0.32)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <div style={{ fontSize: 12, color: '#bfdbfe', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Saude da operacao
+            </div>
+            <div style={{ marginTop: 10, fontSize: 34, fontWeight: 800 }}>{stats.percentual_ativos}%</div>
+            <div style={{ marginTop: 4, color: '#dbeafe', fontSize: 13 }}>dos equipamentos estao ativos</div>
+            <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
+              <InsightItem
+                label="Setor lider"
+                value={topSector ? `${topSector.name} (${topSector.value})` : 'Sem dados'}
+                tone={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: 'rgba(255,255,255,0.12)',
+                  labelColor: '#bfdbfe',
+                  valueColor: '#ffffff',
+                }}
+              />
+              <InsightItem
+                label="Tipo dominante"
+                value={topType ? `${topType.name} (${topType.value})` : 'Sem dados'}
+                tone={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: 'rgba(255,255,255,0.12)',
+                  labelColor: '#bfdbfe',
+                  valueColor: '#ffffff',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 600, color: '#374151' }}>Equipamentos por Setor</h3>
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
+        <StatCard title="Base total" value={stats.total} helper="todos os itens controlados" accent="#2563eb" icon="INV" />
+        <StatCard title="Equipamentos ativos" value={stats.ativos} helper="itens prontos para operacao" accent="#16a34a" icon="OK" />
+        <StatCard title="Em manutencao" value={stats.em_manutencao} helper={`${maintenanceRate} da base exige atencao`} accent="#f59e0b" icon="MT" />
+        <StatCard title="Com ticket" value={stats.com_ticket} helper="equipamentos vinculados a chamados" accent="#7c3aed" icon="TK" />
+      </section>
+
+      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 20 }}>
+        <div style={{ ...cardStyle, padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Distribuicao por setor</h3>
+              <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
+                Top setores com maior concentracao de equipamentos
+              </p>
+            </div>
+          </div>
           {setorData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={isMobile ? 280 : 250}>
-              <BarChart data={setorData} margin={{ left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11 }}
-                  interval={0}
-                  angle={isMobile ? -25 : 0}
-                  textAnchor={isMobile ? 'end' : 'middle'}
-                  height={isMobile ? 60 : 30}
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={setorData} margin={{ top: 10, right: 12, left: -18, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#475569' }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#475569' }} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(37,99,235,0.06)' }}
+                  contentStyle={{ borderRadius: 14, border: '1px solid #dbeafe', boxShadow: '0 10px 25px rgba(15,23,42,0.08)' }}
                 />
-                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }} />
-                <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} name="Equipamentos" />
+                <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#2563eb" name="Equipamentos" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ textAlign: 'center', color: '#9ca3af', padding: '40px 0' }}>Nenhum dado disponivel</div>
+            <div style={{ padding: 32, textAlign: 'center', color: '#64748b' }}>Nenhum dado por setor disponivel.</div>
           )}
         </div>
 
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 600, color: '#374151' }}>Equipamentos por Tipo</h3>
+        <div style={{ ...cardStyle, padding: 24 }}>
+          <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Mix por tipo</h3>
+          <p style={{ margin: '4px 0 18px', color: '#64748b', fontSize: 13 }}>
+            Leitura rapida dos tipos mais representativos do inventario
+          </p>
           {tipoData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={isMobile ? 300 : 250}>
-              <PieChart>
-                <Pie
-                  data={tipoData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={isMobile ? 74 : 90}
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                  fontSize={10}
-                >
-                  {tipoData.map((_, index) => (
-                    <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: 8, fontSize: 13 }} />
-              </PieChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={tipoData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={92}
+                    innerRadius={48}
+                    paddingAngle={4}
+                  >
+                    {tipoData.map((_, index) => (
+                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(15,23,42,0.08)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {tipoData.map((item, index) => (
+                  <div key={item.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: '50%',
+                          display: 'inline-block',
+                          background: CHART_COLORS[index % CHART_COLORS.length],
+                        }}
+                      />
+                      <span style={{ fontSize: 13, color: '#334155' }}>{item.name}</span>
+                    </div>
+                    <strong style={{ fontSize: 13, color: '#0f172a' }}>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
-            <div style={{ textAlign: 'center', color: '#9ca3af', padding: '40px 0' }}>Nenhum dado disponivel</div>
+            <div style={{ padding: 32, textAlign: 'center', color: '#64748b' }}>Nenhum dado por tipo disponivel.</div>
           )}
         </div>
+      </section>
 
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 600, color: '#374151' }}>Distribuicao por Status</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[
-              { label: 'Ativo', value: stats.ativos, color: '#16a34a' },
-              { label: 'Em Manutencao', value: stats.em_manutencao, color: '#d97706' },
-              { label: 'Inativo', value: stats.inativos, color: '#dc2626' },
-            ].map(({ label, value, color }) => {
-              const pct = stats.total > 0 ? (value / stats.total) * 100 : 0;
-              return (
-                <div key={label}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, gap: 12 }}>
-                    <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{label}</span>
-                    <span style={{ fontSize: 13, color: '#6b7280' }}>
-                      {value} ({pct.toFixed(1)}%)
-                    </span>
-                  </div>
-                  <div style={{ height: 8, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-              );
-            })}
+      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 20 }}>
+        <div style={{ ...cardStyle, padding: 24 }}>
+          <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Alertas operacionais</h3>
+          <p style={{ margin: '4px 0 18px', color: '#64748b', fontSize: 13 }}>
+            Indicadores que ajudam a priorizar manutencao e distribuicao
+          </p>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <InsightItem
+              label="Em manutencao"
+              value={`${stats.em_manutencao} item(ns)`}
+              tone={{ background: '#fff7ed', border: '#fed7aa', labelColor: '#c2410c', valueColor: '#9a3412' }}
+            />
+            <InsightItem
+              label="Com ticket ativo"
+              value={`${stats.com_ticket} item(ns)`}
+              tone={{ background: '#f5f3ff', border: '#ddd6fe', labelColor: '#6d28d9', valueColor: '#5b21b6' }}
+            />
+            <InsightItem
+              label="Laptops com responsavel"
+              value={`${stats.laptops_atribuidos} item(ns)`}
+              tone={{ background: '#eff6ff', border: '#bfdbfe', labelColor: '#1d4ed8', valueColor: '#1e3a8a' }}
+            />
           </div>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 600, color: '#374151' }}>Ranking por Setor</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {setorData.length > 0 ? (
-              setorData.map(({ name, value }, index) => (
+        <div style={{ ...cardStyle, padding: 24 }}>
+          <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Ultimos cadastros</h3>
+          <p style={{ margin: '4px 0 18px', color: '#64748b', fontSize: 13 }}>
+            Itens adicionados mais recentemente na base
+          </p>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {(stats.recentes || []).length > 0 ? (
+              stats.recentes.map((device) => (
                 <div
-                  key={name}
+                  key={device.id}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '8px 0',
-                    borderBottom: index < setorData.length - 1 ? '1px solid #f3f4f6' : 'none',
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
                   }}
                 >
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 6,
-                      background: CHART_COLORS[index % CHART_COLORS.length],
-                      color: '#fff',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {index + 1}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{device.nome_dispositivo}</div>
+                      <div style={{ marginTop: 4, fontSize: 12, color: '#64748b' }}>
+                        {device.tipo} • {device.setor || 'Sem setor'}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: device.status === 'Ativo' ? '#dcfce7' : device.status === 'Em manutenção' ? '#fef3c7' : '#fee2e2',
+                        color: device.status === 'Ativo' ? '#166534' : device.status === 'Em manutenção' ? '#92400e' : '#991b1b',
+                      }}
+                    >
+                      {device.status}
+                    </span>
                   </div>
-                  <span style={{ flex: 1, fontSize: 13, color: '#374151' }}>{name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: CHART_COLORS[index % CHART_COLORS.length] }}>{value}</span>
+                  <div style={{ marginTop: 10, fontSize: 12, color: '#475569' }}>Cadastro: {device.data_cadastro || '-'}</div>
                 </div>
               ))
             ) : (
-              <div style={{ textAlign: 'center', color: '#9ca3af', padding: '20px 0' }}>Nenhum setor cadastrado</div>
+              <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>Nenhum cadastro recente encontrado.</div>
             )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

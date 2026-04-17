@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // pages/Devices.jsx
 // Pagina de listagem, busca e gerenciamento de equipamentos
 // ============================================================
@@ -8,16 +8,114 @@ import { deleteDevice, fetchDashboardStats, fetchDevices } from '../services/api
 import { EQUIPMENT_TYPES, SECTORS, STATUS_COLORS, STATUS_OPTIONS, TYPE_ICONS } from '../utils/constants';
 import DeviceForm from '../components/DeviceForm';
 
+const cardStyle = {
+  background: '#ffffff',
+  borderRadius: 20,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 18px 45px rgba(15, 23, 42, 0.06)',
+};
+
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Mais recentes' },
+  { value: 'name', label: 'Nome A-Z' },
+  { value: 'sector', label: 'Setor A-Z' },
+  { value: 'status', label: 'Status A-Z' },
+];
+
+const normalizeSectorName = (sector) => {
+  if (!sector) return 'Nao informado';
+
+  const aliases = {
+    'Expedição': 'Expedicao',
+    Expedicao: 'Expedicao',
+    'Operações': 'Operacao',
+    Operacoes: 'Operacao',
+    'Operação': 'Operacao',
+    Administracao: 'ADM',
+    'Administração': 'ADM',
+    Fulfillment: 'Fullfilment',
+  };
+
+  return aliases[sector] || sector;
+};
+
+const sortDevices = (items, sortBy) => {
+  const sorted = [...items];
+
+  switch (sortBy) {
+    case 'name':
+      return sorted.sort((a, b) => (a.nome_dispositivo || '').localeCompare(b.nome_dispositivo || ''));
+    case 'sector':
+      return sorted.sort((a, b) => (a.setor || '').localeCompare(b.setor || ''));
+    case 'status':
+      return sorted.sort((a, b) => (a.status || '').localeCompare(b.status || ''));
+    case 'recent':
+    default:
+      return sorted.sort((a, b) => (b.data_cadastro || '').localeCompare(a.data_cadastro || ''));
+  }
+};
+
+const downloadCsv = (rows) => {
+  const headers = [
+    'Nome',
+    'Tipo',
+    'Marca',
+    'Modelo',
+    'Numero de Serie',
+    'Setor',
+    'Status',
+    'Ticket',
+    'Pessoa Atribuida',
+    'Data Cadastro',
+  ];
+
+  const csvLines = [
+    headers.join(';'),
+    ...rows.map((device) =>
+      [
+        device.nome_dispositivo,
+        device.tipo,
+        device.marca,
+        device.modelo,
+        device.numero_serie,
+        device.setor,
+        device.status,
+        device.ticket,
+        device.pessoa_atribuida,
+        device.data_cadastro,
+      ]
+        .map((value) => `"${String(value || '').replace(/"/g, '""')}"`)
+        .join(';')
+    ),
+  ];
+
+  const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `inventario-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const KpiCard = ({ label, value, helper, accent }) => (
+  <div style={{ ...cardStyle, padding: 20 }}>
+    <div style={{ fontSize: 12, fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+    <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800, color: '#0f172a' }}>{value}</div>
+    <div style={{ marginTop: 6, fontSize: 12, color: '#64748b' }}>{helper}</div>
+  </div>
+);
+
 const StatusBadge = ({ status }) => {
-  const colors = STATUS_COLORS[status] || { bg: '#f3f4f6', text: '#374151', border: '#d1d5db' };
+  const colors = STATUS_COLORS[status] || { bg: '#f8fafc', text: '#334155', border: '#cbd5e1' };
 
   return (
     <span
       style={{
-        padding: '3px 10px',
-        borderRadius: 20,
+        padding: '5px 10px',
+        borderRadius: 999,
         fontSize: 12,
-        fontWeight: 600,
+        fontWeight: 700,
         background: colors.bg,
         color: colors.text,
         border: `1px solid ${colors.border}`,
@@ -29,184 +127,95 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const SECTOR_ALIASES = {
-  Expedicao: 'Expedicao',
-  'Expedição': 'Expedicao',
-  Operacoes: 'Operacao',
-  'Operações': 'Operacao',
-  'Operação': 'Operacao',
-  Administracao: 'ADM',
-  'Administração': 'ADM',
-  Fulfillment: 'Fullfilment',
-};
-
-const normalizeSectorName = (sector) => {
-  if (!sector) return 'Nao informado';
-  return SECTOR_ALIASES[sector] || sector;
-};
-
-const MagnifierIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <circle cx="7" cy="7" r="4.5" stroke="#64748b" strokeWidth="1.4" />
-    <path d="M10.5 10.5L14 14" stroke="#64748b" strokeWidth="1.4" strokeLinecap="round" />
-  </svg>
-);
-
 const Devices = () => {
   const [devices, setDevices] = useState([]);
-  const [sectorDevices, setSectorDevices] = useState([]);
+  const [allDevices, setAllDevices] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
-  const [sectorTotals, setSectorTotals] = useState([]);
-  const [expandedSector, setExpandedSector] = useState(null);
-  const [expandedSectorDeviceId, setExpandedSectorDeviceId] = useState(null);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
 
   const [search, setSearch] = useState('');
-  const [sectorSearch, setSectorSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sortBy, setSortBy] = useState('recent');
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showForm, setShowForm] = useState(false);
   const [editingDevice, setEditingDevice] = useState(null);
-
   const [deletingId, setDeletingId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const loadDevices = useCallback(async () => {
+  const loadInventoryData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const result = await fetchDevices({
-        search: search || undefined,
-        type: filterType !== 'all' ? filterType : undefined,
-        status: filterStatus !== 'all' ? filterStatus : undefined,
-        page: currentPage,
-        limit: 15,
-      });
-      setDevices(result.data);
-      setPagination(result.pagination);
+
+      const [devicesResult, dashboardResult, allDevicesResult] = await Promise.all([
+        fetchDevices({
+          search: search || undefined,
+          type: filterType !== 'all' ? filterType : undefined,
+          status: filterStatus !== 'all' ? filterStatus : undefined,
+          page: currentPage,
+          limit: 15,
+        }),
+        fetchDashboardStats(),
+        fetchDevices({ page: 1, limit: 1000 }),
+      ]);
+
+      setDevices(sortDevices(devicesResult.data || [], sortBy));
+      setPagination(devicesResult.pagination || { total: 0, page: 1, totalPages: 1 });
+      setStats(dashboardResult.data);
+      setAllDevices(allDevicesResult.data || []);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Erro ao carregar equipamentos');
     } finally {
       setLoading(false);
     }
-  }, [search, filterType, filterStatus, currentPage]);
+  }, [search, filterType, filterStatus, currentPage, sortBy]);
 
   useEffect(() => {
-    const timeout = setTimeout(loadDevices, 300);
+    const timeout = setTimeout(loadInventoryData, 250);
     return () => clearTimeout(timeout);
-  }, [loadDevices]);
-
-  useEffect(() => {
-    const loadSectorTotals = async () => {
-      try {
-        const [statsResult, devicesResult] = await Promise.all([
-          fetchDashboardStats(),
-          fetchDevices({ page: 1, limit: 1000 }),
-        ]);
-
-        const normalizedTotals = Object.entries(statsResult.data?.por_setor || {}).reduce((acc, [name, value]) => {
-          const sectorName = normalizeSectorName(name);
-          acc[sectorName] = (acc[sectorName] || 0) + value;
-          return acc;
-        }, {});
-
-        const sectorOrder = [...SECTORS, 'Operacao', 'Expedicao', 'Nao informado'];
-        const totals = sectorOrder
-          .filter((value, index, array) => array.indexOf(value) === index)
-          .map((name) => ({ name, value: normalizedTotals[name] || 0 }))
-          .filter(({ value }) => value > 0)
-          .sort((a, b) => b.value - a.value);
-
-        setSectorTotals(totals);
-        setSectorDevices(devicesResult.data || []);
-      } catch (err) {
-        setSectorTotals([]);
-        setSectorDevices([]);
-      }
-    };
-
-    loadSectorTotals();
-  }, []);
+  }, [loadInventoryData]);
 
   const visibleSectorTotals = useMemo(() => {
-    if (sectorTotals.length > 0) {
-      return sectorTotals;
-    }
-
-    const totals = devices.reduce((acc, device) => {
-      const sectorName = normalizeSectorName(device.setor);
-      acc[sectorName] = (acc[sectorName] || 0) + 1;
+    const totals = allDevices.reduce((acc, device) => {
+      const sector = normalizeSectorName(device.setor);
+      acc[sector] = (acc[sector] || 0) + 1;
       return acc;
     }, {});
 
-    return Object.entries(totals)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [devices, sectorTotals]);
+    return [...SECTORS, 'Nao informado']
+      .filter((value, index, array) => array.indexOf(value) === index)
+      .map((name) => ({ name, value: totals[name] || 0 }))
+      .filter((item) => item.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [allDevices]);
 
-  const sectorItemsMap = useMemo(() => {
-    const sourceDevices = sectorDevices.length > 0 ? sectorDevices : devices;
+  const derivedStats = useMemo(() => {
+    const active = allDevices.filter((item) => item.status === 'Ativo').length;
+    const maintenance = allDevices.filter((item) => item.status === 'Em manutenção').length;
+    const ticketed = allDevices.filter((item) => item.ticket?.trim()).length;
+    const assigned = allDevices.filter((item) => item.tipo === 'Laptop' && item.pessoa_atribuida?.trim()).length;
 
-    return sourceDevices.reduce((acc, device) => {
-      const sectorName = normalizeSectorName(device.setor);
-      if (!acc[sectorName]) acc[sectorName] = [];
-      acc[sectorName].push(device);
-      return acc;
-    }, {});
-  }, [devices, sectorDevices]);
+    return {
+      active,
+      maintenance,
+      ticketed,
+      assigned,
+    };
+  }, [allDevices]);
 
-  const normalizedSectorSearch = sectorSearch.trim().toLowerCase();
-
-  const filteredSectorTotals = useMemo(() => {
-    if (!normalizedSectorSearch) return visibleSectorTotals;
-
-    return visibleSectorTotals
-      .map((sector) => {
-        const matchedDevices = (sectorItemsMap[sector.name] || []).filter((device) =>
-          [
-            device.nome_dispositivo,
-            device.numero_serie,
-            device.tipo,
-            device.marca,
-            device.modelo,
-            device.status,
-            device.ticket,
-            device.observacoes,
-          ]
-            .filter(Boolean)
-            .some((value) => String(value).toLowerCase().includes(normalizedSectorSearch))
-        );
-
-        return {
-          ...sector,
-          matchedDevices,
-          value: matchedDevices.length,
-        };
-      })
-      .filter((sector) => sector.value > 0);
-  }, [normalizedSectorSearch, sectorItemsMap, visibleSectorTotals]);
-
-  const topSector = filteredSectorTotals[0];
-
-  const handleEdit = (device) => {
-    setEditingDevice(device);
-    setShowForm(true);
-  };
-
-  const handleNew = () => {
-    setEditingDevice(null);
-    setShowForm(true);
-  };
+  const topSector = visibleSectorTotals[0];
 
   const handleFormClose = () => {
     setShowForm(false);
@@ -215,501 +224,309 @@ const Devices = () => {
 
   const handleFormSuccess = () => {
     handleFormClose();
-    loadDevices();
+    loadInventoryData();
   };
 
   const handleDeleteConfirm = async () => {
     if (!deletingId) return;
     setDeleteLoading(true);
+
     try {
       await deleteDevice(deletingId);
       setDeletingId(null);
-      loadDevices();
+      loadInventoryData();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Erro ao excluir equipamento');
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  const btnBase = {
+  const buttonBase = {
     border: 'none',
-    borderRadius: 7,
+    borderRadius: 12,
     cursor: 'pointer',
     fontSize: 13,
-    fontWeight: 500,
+    fontWeight: 700,
     fontFamily: 'inherit',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    transition: 'opacity 0.15s',
+    padding: '10px 16px',
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Equipamentos</h1>
-          <p style={{ color: '#6b7280', margin: '4px 0 0', fontSize: 14 }}>
-            {pagination.total} equipamento{pagination.total !== 1 ? 's' : ''} encontrado{pagination.total !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <button
-          onClick={handleNew}
-          style={{ ...btnBase, background: '#2563eb', color: '#fff', padding: '10px 18px', fontSize: 14, fontWeight: 600 }}
-        >
-          Novo Equipamento
-        </button>
-      </div>
-
-      <div
+    <div style={{ display: 'grid', gap: 22 }}>
+      <section
         style={{
-          background: '#fff',
-          borderRadius: 12,
-          padding: isMobile ? 16 : 20,
-          marginBottom: 20,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
+          ...cardStyle,
+          padding: isMobile ? 22 : 28,
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 54%, #0f766e 100%)',
+          color: '#ffffff',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: isMobile ? 'flex-start' : 'center',
-            justifyContent: 'space-between',
-            marginBottom: 16,
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Quantidade de dispositivos por setor</h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
-              Resumo executivo para consulta rapida, sem alterar o fluxo da aba de equipamentos.
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ maxWidth: 680 }}>
+            <div style={{ fontSize: 12, color: '#bfdbfe', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+              Gestao operacional de ativos
+            </div>
+            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 34, lineHeight: 1.1 }}>
+              Controle visual, filtro rapido e acoes mais objetivas para o inventario
+            </h1>
+            <p style={{ margin: 0, color: '#dbeafe', lineHeight: 1.7, fontSize: 14 }}>
+              Reorganizei a tela para facilitar leitura do volume, exportacao, priorizacao de manutencao e tomada de decisao por setor sem perder o CRUD principal.
             </p>
           </div>
 
-          {topSector && (
-            <div
-              style={{
-                padding: '10px 14px',
-                borderRadius: 10,
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                minWidth: isMobile ? '100%' : 220,
-              }}
-            >
-              <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#1d4ed8', fontWeight: 700 }}>
-                Maior volume
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <button onClick={() => downloadCsv(sortDevices(allDevices, sortBy))} style={{ ...buttonBase, background: '#ffffff', color: '#0f172a' }}>
+              Exportar CSV
+            </button>
+            <button onClick={() => { setEditingDevice(null); setShowForm(true); }} style={{ ...buttonBase, background: '#38bdf8', color: '#082f49' }}>
+              Novo equipamento
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <KpiCard label="Base total" value={stats?.total || allDevices.length} helper="volume geral do inventario" accent="#2563eb" />
+        <KpiCard label="Ativos" value={derivedStats.active} helper="equipamentos disponiveis para operacao" accent="#16a34a" />
+        <KpiCard label="Em manutencao" value={derivedStats.maintenance} helper="itens que exigem acompanhamento" accent="#f59e0b" />
+        <KpiCard label="Com ticket" value={derivedStats.ticketed} helper="equipamentos associados a chamados" accent="#7c3aed" />
+      </section>
+
+      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: 20 }}>
+        <div style={{ ...cardStyle, padding: 22 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Concentracao por setor</h2>
+              <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
+                Visao rapida da distribuicao dos equipamentos por area
+              </p>
+            </div>
+            {topSector && (
+              <div style={{ padding: '10px 14px', borderRadius: 14, background: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase' }}>Maior concentracao</div>
+                <div style={{ marginTop: 4, fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{topSector.name}</div>
+                <div style={{ marginTop: 2, fontSize: 12, color: '#475569' }}>{topSector.value} equipamento(s)</div>
               </div>
-              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 700, color: '#111827' }}>{topSector.name}</div>
-              <div style={{ marginTop: 2, fontSize: 13, color: '#1e40af' }}>{topSector.value} dispositivo(s)</div>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
+            {visibleSectorTotals.map((sector) => (
+              <div key={sector.name} style={{ padding: 16, borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700 }}>{sector.name}</div>
+                <div style={{ marginTop: 10, fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{sector.value}</div>
+                <div style={{ marginTop: 4, fontSize: 12, color: '#64748b' }}>ativos, estoque ou manutencao por setor</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, padding: 22 }}>
+          <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Leituras importantes</h2>
+          <p style={{ margin: '4px 0 18px', color: '#64748b', fontSize: 13 }}>
+            Indicadores para o gestor agir mais rapido
+          </p>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ padding: 16, borderRadius: 16, background: '#fff7ed', border: '1px solid #fed7aa' }}>
+              <div style={{ fontSize: 12, color: '#c2410c', fontWeight: 700, textTransform: 'uppercase' }}>Backlog de manutencao</div>
+              <div style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: '#9a3412' }}>{derivedStats.maintenance}</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: '#9a3412' }}>prioridade para evitar indisponibilidade operacional</div>
+            </div>
+            <div style={{ padding: 16, borderRadius: 16, background: '#f5f3ff', border: '1px solid #ddd6fe' }}>
+              <div style={{ fontSize: 12, color: '#6d28d9', fontWeight: 700, textTransform: 'uppercase' }}>Tickets vinculados</div>
+              <div style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: '#5b21b6' }}>{derivedStats.ticketed}</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: '#5b21b6' }}>bom para acompanhar SLA e reincidencia</div>
+            </div>
+            <div style={{ padding: 16, borderRadius: 16, background: '#ecfeff', border: '1px solid #a5f3fc' }}>
+              <div style={{ fontSize: 12, color: '#0f766e', fontWeight: 700, textTransform: 'uppercase' }}>Laptops atribuidos</div>
+              <div style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: '#115e59' }}>{derivedStats.assigned}</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: '#115e59' }}>rastreabilidade melhor para itens de uso pessoal</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ ...cardStyle, padding: 22 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a' }}>Central de equipamentos</h2>
+            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
+              Busca, filtros, ordenacao e acoes operacionais em uma unica tabela
+            </p>
+          </div>
+          <div style={{ fontSize: 13, color: '#475569', fontWeight: 700 }}>
+            {pagination.total} registro(s) encontrado(s)
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Buscar por nome, serie, setor, marca ou responsavel"
+            style={{ padding: '12px 14px', borderRadius: 14, border: '1px solid #cbd5e1', fontSize: 14, fontFamily: 'inherit' }}
+          />
+
+          <select
+            value={filterType}
+            onChange={(event) => {
+              setFilterType(event.target.value);
+              setCurrentPage(1);
+            }}
+            style={{ padding: '12px 14px', borderRadius: 14, border: '1px solid #cbd5e1', fontSize: 14, fontFamily: 'inherit', background: '#fff' }}
+          >
+            <option value="all">Todos os tipos</option>
+            {EQUIPMENT_TYPES.map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(event) => {
+              setFilterStatus(event.target.value);
+              setCurrentPage(1);
+            }}
+            style={{ padding: '12px 14px', borderRadius: 14, border: '1px solid #cbd5e1', fontSize: 14, fontFamily: 'inherit', background: '#fff' }}
+          >
+            <option value="all">Todos os status</option>
+            {STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+            style={{ padding: '12px 14px', borderRadius: 14, border: '1px solid #cbd5e1', fontSize: 14, fontFamily: 'inherit', background: '#fff' }}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {(search || filterType !== 'all' || filterStatus !== 'all') && (
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ fontSize: 13, color: '#475569' }}>
+              Filtros ativos para refinar a leitura da base.
+            </div>
+            <button
+              onClick={() => {
+                setSearch('');
+                setFilterType('all');
+                setFilterStatus('all');
+                setSortBy('recent');
+                setCurrentPage(1);
+              }}
+              style={{ ...buttonBase, background: '#f8fafc', color: '#334155', padding: '9px 14px' }}
+            >
+              Limpar filtros
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ marginBottom: 16, padding: 14, borderRadius: 14, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: 13 }}>
+            Erro: {error}
+          </div>
+        )}
+
+        <div style={{ borderRadius: 18, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+          {loading ? (
+            <div style={{ padding: 48, textAlign: 'center', color: '#64748b' }}>Carregando base operacional...</div>
+          ) : devices.length === 0 ? (
+            <div style={{ padding: 48, textAlign: 'center', color: '#64748b' }}>
+              Nenhum equipamento encontrado com os filtros atuais.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 980 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    {['Equipamento', 'Tipo', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => (
+                      <th key={header} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {devices.map((device, index) => (
+                    <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff', borderTop: '1px solid #edf2f7' }}>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{device.nome_dispositivo}</div>
+                        <div style={{ marginTop: 4, fontSize: 12, color: '#64748b' }}>Cadastro: {device.data_cadastro || '-'}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                        {(TYPE_ICONS[device.tipo] || 'ITEM')} {device.tipo}
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: 13, color: '#334155' }}>{device.marca}</div>
+                        <div style={{ marginTop: 4, fontSize: 12, color: '#64748b' }}>{device.modelo}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 12, color: '#334155', fontFamily: 'monospace' }}>{device.numero_serie}</td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: '#334155' }}>{device.setor}</td>
+                      <td style={{ padding: '14px 16px' }}><StatusBadge status={device.status} /></td>
+                      <td style={{ padding: '14px 16px', fontSize: 12, color: device.ticket ? '#7c2d12' : '#94a3b8', fontWeight: device.ticket ? 700 : 500 }}>
+                        {device.ticket || 'Sem ticket'}
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 12, color: '#334155' }}>{device.pessoa_atribuida || '-'}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => {
+                              setEditingDevice(device);
+                              setShowForm(true);
+                            }}
+                            style={{ ...buttonBase, background: '#eff6ff', color: '#1d4ed8', padding: '8px 12px' }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(device.id)}
+                            style={{ ...buttonBase, background: '#fef2f2', color: '#dc2626', padding: '8px 12px' }}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <div
-            style={{
-              position: 'relative',
-              width: isMobile ? '100%' : 340,
-              maxWidth: '100%',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                left: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                alignItems: 'center',
-                pointerEvents: 'none',
-              }}
-            >
-              <MagnifierIcon />
-            </div>
-            <input
-              value={sectorSearch}
-              onChange={(event) => {
-                setSectorSearch(event.target.value);
-                setExpandedSector(null);
-                setExpandedSectorDeviceId(null);
-              }}
-              placeholder="Buscar equipamento por nome ou numero de serie"
-              style={{
-                width: '100%',
-                padding: '10px 12px 10px 38px',
-                borderRadius: 10,
-                border: '1px solid #d1d5db',
-                background: '#fff',
-                fontSize: 13,
-                color: '#111827',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-        </div>
-
-        {filteredSectorTotals.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-            {filteredSectorTotals.map(({ name, value, matchedDevices }) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => {
-                  setExpandedSector((current) => (current === name ? null : name));
-                  setExpandedSectorDeviceId(null);
-                }}
-                style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: 12,
-                  padding: '14px 16px',
-                  background: '#f8fafc',
-                  textAlign: 'left',
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  boxShadow: expandedSector === name ? '0 0 0 2px rgba(37, 99, 235, 0.12)' : 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
-                      {name}
-                    </div>
-                    <div style={{ marginTop: 8, fontSize: 24, fontWeight: 700, color: '#0f172a' }}>{value}</div>
-                    <div style={{ marginTop: 2, fontSize: 12, color: '#6b7280' }}>dispositivo(s)</div>
-                  </div>
-                  <div style={{ fontSize: 18, color: '#2563eb', lineHeight: 1 }}>{expandedSector === name ? '−' : '+'}</div>
-                </div>
-
-                {expandedSector === name && (
-                  <div
-                    style={{
-                      marginTop: 14,
-                      paddingTop: 14,
-                      borderTop: '1px solid #dbeafe',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 8,
-                    }}
-                  >
-                    {(matchedDevices || sectorItemsMap[name] || []).length > 0 ? (
-                      (matchedDevices || sectorItemsMap[name] || []).map((device) => (
-                        <div
-                          key={device.id}
-                        >
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setExpandedSectorDeviceId((current) => (current === device.id ? null : device.id));
-                            }}
-                            style={{
-                              width: '100%',
-                              padding: '10px 12px',
-                              borderRadius: 10,
-                              background: '#ffffff',
-                              border: expandedSectorDeviceId === device.id ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                              textAlign: 'left',
-                              fontFamily: 'inherit',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{device.nome_dispositivo}</div>
-                                <div style={{ marginTop: 2, fontSize: 12, color: '#64748b' }}>
-                                  {device.tipo} • {device.status}
-                                </div>
-                                <div style={{ marginTop: 4, fontSize: 12, color: '#475569', fontFamily: 'monospace' }}>
-                                  Serie: {device.numero_serie || '-'}
-                                </div>
-                              </div>
-                              <div style={{ fontSize: 16, color: '#2563eb', lineHeight: 1 }}>{expandedSectorDeviceId === device.id ? '−' : '+'}</div>
-                            </div>
-
-                            {expandedSectorDeviceId === device.id && (
-                              <div
-                                style={{
-                                  marginTop: 12,
-                                  paddingTop: 12,
-                                  borderTop: '1px solid #dbeafe',
-                                  display: 'grid',
-                                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                                  gap: 10,
-                                }}
-                              >
-                                <div style={{ fontSize: 12, color: '#334155' }}>
-                                  <strong>Marca:</strong> {device.marca || '-'}
-                                </div>
-                                <div style={{ fontSize: 12, color: '#334155' }}>
-                                  <strong>Modelo:</strong> {device.modelo || '-'}
-                                </div>
-                                <div style={{ fontSize: 12, color: '#334155' }}>
-                                  <strong>Setor:</strong> {device.setor || name}
-                                </div>
-                                <div style={{ fontSize: 12, color: '#334155' }}>
-                                  <strong>Ticket:</strong> {device.ticket || '-'}
-                                </div>
-                                <div style={{ gridColumn: '1 / -1', fontSize: 12, color: '#334155' }}>
-                                  <strong>Observacoes:</strong> {device.observacoes || 'Nenhuma observacao cadastrada.'}
-                                </div>
-                              </div>
-                            )}
-                          </button>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{ fontSize: 12, color: '#64748b' }}>Nenhum item encontrado neste setor.</div>
-                    )}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div
-            style={{
-              borderRadius: 10,
-              border: '1px dashed #cbd5e1',
-              padding: '20px 16px',
-              color: '#64748b',
-              fontSize: 13,
-              textAlign: 'center',
-            }}
-          >
-            {normalizedSectorSearch
-              ? 'Nenhum equipamento encontrado para essa busca.'
-              : 'Os totais por setor serao exibidos assim que houver equipamentos cadastrados.'}
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: 10,
-          padding: 16,
-          marginBottom: 20,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
-          display: 'flex',
-          gap: 12,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ flex: '1 1 220px', position: 'relative' }}>
-          <input
-            style={{
-              width: '100%',
-              padding: '9px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: 8,
-              fontSize: 14,
-              boxSizing: 'border-box',
-              fontFamily: 'inherit',
-            }}
-            placeholder="Buscar por nome, setor, marca..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-
-        <select
-          style={{ padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', background: '#fff', minWidth: isMobile ? '100%' : 180 }}
-          value={filterType}
-          onChange={(e) => {
-            setFilterType(e.target.value);
-            setCurrentPage(1);
-          }}
-        >
-          <option value="all">Todos os tipos</option>
-          {EQUIPMENT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-
-        <select
-          style={{ padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', background: '#fff', minWidth: isMobile ? '100%' : 180 }}
-          value={filterStatus}
-          onChange={(e) => {
-            setFilterStatus(e.target.value);
-            setCurrentPage(1);
-          }}
-        >
-          <option value="all">Todos os status</option>
-          {STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-
-        {(search || filterType !== 'all' || filterStatus !== 'all') && (
-          <button
-            onClick={() => {
-              setSearch('');
-              setFilterType('all');
-              setFilterStatus('all');
-              setCurrentPage(1);
-            }}
-            style={{
-              ...btnBase,
-              background: '#f3f4f6',
-              color: '#6b7280',
-              padding: '9px 14px',
-              width: isMobile ? '100%' : 'auto',
-              justifyContent: 'center',
-            }}
-          >
-            Limpar filtros
-          </button>
-        )}
-      </div>
-
-      {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 12, marginBottom: 16, color: '#dc2626', fontSize: 13 }}>
-          Erro: {error}
-        </div>
-      )}
-
-      <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6b7280' }}>Carregando equipamentos...</div>
-        ) : devices.length === 0 ? (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6b7280' }}>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Nenhum equipamento encontrado</div>
-            <div style={{ fontSize: 13 }}>Tente ajustar os filtros ou cadastrar um novo equipamento.</div>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? 860 : 700 }}>
-              <thead>
-                <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  {['Dispositivo', 'Tipo', 'Marca / Modelo', 'No Serie', 'Setor', 'Status', 'Ticket', 'Acoes'].map((header) => (
-                    <th
-                      key={header}
-                      style={{
-                        padding: '11px 16px',
-                        textAlign: 'left',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {devices.map((device, index) => (
-                  <tr
-                    key={device.id}
-                    style={{
-                      borderBottom: '1px solid #f3f4f6',
-                      background: index % 2 === 0 ? '#fff' : '#fafafa',
-                    }}
-                  >
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>{device.nome_dispositivo}</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{device.data_cadastro}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151', whiteSpace: 'nowrap' }}>
-                      {TYPE_ICONS[device.tipo] || 'Item'} {device.tipo}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontSize: 13, color: '#374151' }}>{device.marca}</div>
-                      <div style={{ fontSize: 12, color: '#9ca3af' }}>{device.modelo}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>{device.numero_serie}</td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{device.setor}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <StatusBadge status={device.status} />
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280' }}>{device.ticket || '-'}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => handleEdit(device)}
-                          style={{ ...btnBase, background: '#eff6ff', color: '#2563eb', padding: '6px 12px' }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(device.id)}
-                          style={{ ...btnBase, background: '#fef2f2', color: '#dc2626', padding: '6px 12px' }}
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
         {!loading && pagination.totalPages > 1 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 16px',
-              borderTop: '1px solid #f3f4f6',
-              flexWrap: 'wrap',
-              gap: 8,
-            }}
-          >
-            <span style={{ fontSize: 13, color: '#6b7280' }}>
-              Pagina {pagination.page} de {pagination.totalPages} · {pagination.total} registros
-            </span>
-            <div style={{ display: 'flex', gap: 8, width: isMobile ? '100%' : 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
+            <div style={{ fontSize: 13, color: '#64748b' }}>
+              Pagina {pagination.page} de {pagination.totalPages}
+            </div>
+            <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : 'auto' }}>
               <button
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((page) => page - 1)}
-                style={{
-                  ...btnBase,
-                  background: '#f3f4f6',
-                  color: '#374151',
-                  padding: '7px 14px',
-                  opacity: currentPage <= 1 ? 0.4 : 1,
-                  flex: isMobile ? 1 : 'initial',
-                  justifyContent: 'center',
-                }}
+                style={{ ...buttonBase, background: '#f8fafc', color: '#334155', opacity: currentPage <= 1 ? 0.45 : 1, flex: isMobile ? 1 : 'initial' }}
               >
                 Anterior
               </button>
               <button
                 disabled={currentPage >= pagination.totalPages}
                 onClick={() => setCurrentPage((page) => page + 1)}
-                style={{
-                  ...btnBase,
-                  background: '#f3f4f6',
-                  color: '#374151',
-                  padding: '7px 14px',
-                  opacity: currentPage >= pagination.totalPages ? 0.4 : 1,
-                  flex: isMobile ? 1 : 'initial',
-                  justifyContent: 'center',
-                }}
+                style={{ ...buttonBase, background: '#0f172a', color: '#ffffff', opacity: currentPage >= pagination.totalPages ? 0.45 : 1, flex: isMobile ? 1 : 'initial' }}
               >
                 Proxima
               </button>
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {showForm && <DeviceForm device={editingDevice} onClose={handleFormClose} onSuccess={handleFormSuccess} />}
 
@@ -718,7 +535,7 @@ const Devices = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.5)',
+            background: 'rgba(15, 23, 42, 0.55)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -726,31 +543,19 @@ const Devices = () => {
             padding: 16,
           }}
         >
-          <div
-            style={{
-              background: '#fff',
-              borderRadius: 12,
-              padding: 28,
-              maxWidth: 400,
-              width: '100%',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
-          >
-            <h3 style={{ margin: '0 0 8px', color: '#111827' }}>Confirmar exclusao</h3>
-            <p style={{ color: '#6b7280', fontSize: 14, margin: '0 0 24px' }}>
-              Tem certeza que deseja remover este equipamento? Esta acao nao pode ser desfeita.
+          <div style={{ ...cardStyle, padding: 28, maxWidth: 420, width: '100%' }}>
+            <h3 style={{ margin: 0, fontSize: 20, color: '#0f172a' }}>Confirmar exclusao</h3>
+            <p style={{ margin: '10px 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.7 }}>
+              Esta acao remove o equipamento da base e deve ser usada apenas quando o registro realmente nao precisa mais existir no inventario.
             </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setDeletingId(null)}
-                style={{ ...btnBase, background: '#f3f4f6', color: '#374151', padding: '10px 20px', flex: isMobile ? 1 : 'initial', justifyContent: 'center' }}
-              >
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button onClick={() => setDeletingId(null)} style={{ ...buttonBase, background: '#f8fafc', color: '#334155' }}>
                 Cancelar
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 disabled={deleteLoading}
-                style={{ ...btnBase, background: '#dc2626', color: '#fff', padding: '10px 20px', opacity: deleteLoading ? 0.6 : 1, flex: isMobile ? 1 : 'initial', justifyContent: 'center' }}
+                style={{ ...buttonBase, background: '#dc2626', color: '#ffffff', opacity: deleteLoading ? 0.6 : 1 }}
               >
                 {deleteLoading ? 'Excluindo...' : 'Excluir'}
               </button>

@@ -20,6 +20,9 @@ router.get('/devices/:id', controller.getDeviceById);
 // POST /api/devices - Cria novo equipamento
 router.post('/devices', controller.createDevice);
 
+// POST /api/devices/bulk - Cria varios equipamentos em lote
+router.post('/devices/bulk', controller.createDevicesBulk);
+
 // PUT /api/devices/:id - Atualiza equipamento existente
 router.put('/devices/:id', controller.updateDevice);
 
