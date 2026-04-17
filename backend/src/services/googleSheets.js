@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 const { google } = require('googleapis');
 
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID?.trim();
@@ -44,6 +45,19 @@ const HEADER_LABELS = [
 ];
 
 const COLUMN_WIDTHS = [210, 220, 180, 120, 160, 180, 140, 130, 120, 130, 130, 260, 180];
+const VISIBLE_DATA_FIELDS = [
+  'tipo',
+  'marca',
+  'modelo',
+  'numero_serie',
+  'setor',
+  'status',
+  'ticket',
+  'data_aquisicao',
+  'data_cadastro',
+  'observacoes',
+  'pessoa_atribuida',
+];
 
 const getSheetRange = (range) => {
   const escapedSheetName = SHEET_NAME.replace(/'/g, "''");
@@ -125,6 +139,103 @@ const rowToObject = (row) => {
 };
 
 const objectToRow = (obj) => HEADERS.map((header) => obj[header] || '');
+
+const getCellString = (cell) => {
+  if (!cell) return '';
+
+  const value =
+    cell.formattedValue ??
+    cell.effectiveValue?.stringValue ??
+    cell.effectiveValue?.numberValue ??
+    cell.effectiveValue?.boolValue ??
+    '';
+
+  return String(value).trim();
+};
+
+const hasVisibleData = (device) =>
+  VISIBLE_DATA_FIELDS.some((field) => String(device[field] || '').trim());
+
+const loadSheetRows = async (sheets) => {
+  const response = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+    ranges: [getSheetRange('A1:M')],
+    includeGridData: true,
+  });
+
+  const sheet = response.data.sheets?.[0];
+  const rowData = sheet?.data?.[0]?.rowData || [];
+
+  return {
+    sheet,
+    rows: rowData.map((row, index) => {
+      const values = Array.from({ length: HEADERS.length }, (_, columnIndex) =>
+        getCellString(row.values?.[columnIndex])
+      );
+
+      return {
+        rowNumber: index + 1,
+        values,
+      };
+    }),
+  };
+};
+
+const syncRowMetadata = async (sheets, updates) => {
+  if (updates.length === 0) return;
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      valueInputOption: 'RAW',
+      data: updates.map((update) => ({
+        range: getSheetRange(`A${update.rowNumber}:B${update.rowNumber}`),
+        values: [[update.id, update.nome_dispositivo]],
+      })),
+    },
+  });
+};
+
+const getDevicesFromSheet = async () => {
+  const sheets = await getSheetsClient();
+  const { rows } = await loadSheetRows(sheets);
+
+  if (rows.length <= 1) return [];
+
+  const metadataUpdates = [];
+  const devices = [];
+
+  rows.slice(1).forEach(({ rowNumber, values }) => {
+    const device = rowToObject(values);
+
+    if (!hasVisibleData(device)) return;
+
+    let nextId = device.id;
+    let nextName = device.nome_dispositivo;
+
+    if (!nextId) nextId = randomUUID();
+    if (!nextName) nextName = device.tipo || device.modelo || device.numero_serie || `linha-${rowNumber}`;
+
+    if (nextId !== device.id || nextName !== device.nome_dispositivo) {
+      metadataUpdates.push({
+        rowNumber,
+        id: nextId,
+        nome_dispositivo: nextName,
+      });
+    }
+
+    devices.push({
+      ...device,
+      id: nextId,
+      nome_dispositivo: nextName,
+      _rowNumber: rowNumber,
+    });
+  });
+
+  await syncRowMetadata(sheets, metadataUpdates);
+
+  return devices;
+};
 
 const ensureSheetFormatting = async (sheets, sheetId) => {
   await sheets.spreadsheets.batchUpdate({
@@ -246,16 +357,8 @@ const ensureSheetFormatting = async (sheets, sheetId) => {
 };
 
 const getAllDevices = async () => {
-  const sheets = await getSheetsClient();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:M'),
-  });
-
-  const rows = response.data.values || [];
-  if (rows.length <= 1) return [];
-
-  return rows.slice(1).map(rowToObject);
+  const devices = await getDevicesFromSheet();
+  return devices.map(({ _rowNumber, ...device }) => device);
 };
 
 const getDeviceById = async (id) => {
@@ -387,20 +490,14 @@ const createDevicesBulk = async (devices) => {
 
 const updateDevice = async (id, updatedData) => {
   const sheets = await getSheetsClient();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:M'),
-  });
+  const devices = await getDevicesFromSheet();
+  const existingDevice = devices.find((device) => device.id === id);
 
-  const rows = response.data.values || [];
-  const rowIndex = rows.findIndex((row, index) => index > 0 && row[0] === id);
+  if (!existingDevice) return null;
 
-  if (rowIndex === -1) return null;
-
-  const existingDevice = rowToObject(rows[rowIndex]);
   const mergedDevice = { ...existingDevice, ...updatedData, id };
   const updatedRow = objectToRow(mergedDevice);
-  const sheetRowNumber = rowIndex + 1;
+  const sheetRowNumber = existingDevice._rowNumber;
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
@@ -416,15 +513,10 @@ const updateDevice = async (id, updatedData) => {
 
 const deleteDevice = async (id) => {
   const sheets = await getSheetsClient();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:A'),
-  });
+  const devices = await getDevicesFromSheet();
+  const existingDevice = devices.find((device) => device.id === id);
 
-  const ids = (response.data.values || []).map((row) => row[0]);
-  const rowIndex = ids.findIndex((rowId, index) => index > 0 && rowId === id);
-
-  if (rowIndex === -1) return false;
+  if (!existingDevice) return false;
 
   const spreadsheet = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -444,8 +536,8 @@ const deleteDevice = async (id) => {
             range: {
               sheetId: sheet.properties.sheetId,
               dimension: 'ROWS',
-              startIndex: rowIndex,
-              endIndex: rowIndex + 1,
+              startIndex: existingDevice._rowNumber - 1,
+              endIndex: existingDevice._rowNumber,
             },
           },
         },

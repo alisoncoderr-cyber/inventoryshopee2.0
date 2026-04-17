@@ -39,7 +39,10 @@ api.interceptors.response.use(
  * @param {Object} params - Parâmetros de busca e paginação
  */
 export const fetchDevices = async (params = {}) => {
-  const response = await api.get('/devices', { params });
+  const response = await api.get('/devices', {
+    params: { ...params, _ts: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   return response.data;
 };
 
@@ -48,7 +51,10 @@ export const fetchDevices = async (params = {}) => {
  * @param {string} id - ID do equipamento
  */
 export const fetchDeviceById = async (id) => {
-  const response = await api.get(`/devices/${id}`);
+  const response = await api.get(`/devices/${id}`, {
+    params: { _ts: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   return response.data;
 };
 
@@ -93,7 +99,10 @@ export const deleteDevice = async (id) => {
  * Busca estatísticas para o dashboard
  */
 export const fetchDashboardStats = async () => {
-  const response = await api.get('/dashboard');
+  const response = await api.get('/dashboard', {
+    params: { _ts: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   return response.data;
 };
 
