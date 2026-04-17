@@ -27,6 +27,13 @@ const getMissingFields = (data) =>
     .filter(([_, value]) => !value)
     .map(([key]) => key);
 
+const normalizeSector = (value = '') =>
+  String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
 /**
  * Lista todos os equipamentos com suporte a filtros e busca
  * Query params: search, type, status, page, limit
@@ -59,7 +66,8 @@ const getDevices = async (req, res) => {
     }
 
     if (setor && setor !== 'all') {
-      devices = devices.filter((d) => d.setor === setor);
+      const normalizedSetor = normalizeSector(setor);
+      devices = devices.filter((d) => normalizeSector(d.setor) === normalizedSetor);
     }
 
     const total = devices.length;

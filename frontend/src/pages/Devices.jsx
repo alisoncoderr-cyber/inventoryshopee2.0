@@ -52,6 +52,7 @@ const SectorChip = ({ active, label, count, onClick }) => (
 const Devices = () => {
   const [devices, setDevices] = useState([]);
   const [allDevices, setAllDevices] = useState([]);
+  const [baseDevices, setBaseDevices] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -82,12 +83,12 @@ const Devices = () => {
       const [devicesResult, dashboardResult, allDevicesResult] = await Promise.all([
         fetchDevices({ ...filters, page: currentPage, limit: 15 }),
         fetchDashboardStats(),
-        fetchDevices({ ...filters, page: 1, limit: 1000 }),
+        fetchDevices({ page: 1, limit: 1000 }),
       ]);
       setDevices(sortDevices(devicesResult.data || [], sortBy));
       setPagination(devicesResult.pagination || { total: 0, page: 1, totalPages: 1 });
       setStats(dashboardResult.data);
-      setAllDevices(sortDevices(allDevicesResult.data || [], sortBy));
+      setBaseDevices(allDevicesResult.data || []);
     } catch (err) {
       setError(err.message || 'Erro ao carregar equipamentos');
     } finally {
@@ -99,6 +100,17 @@ const Devices = () => {
     const timeout = setTimeout(loadInventoryData, 250);
     return () => clearTimeout(timeout);
   }, [loadInventoryData]);
+
+  useEffect(() => {
+    const filtered = baseDevices.filter((item) => {
+      const matchesSearch = !search || [item.nome_dispositivo, item.setor, item.numero_serie, item.marca, item.modelo, item.pessoa_atribuida]
+        .some((value) => String(value || '').toLowerCase().includes(search.toLowerCase()));
+      const matchesType = filterType === 'all' || item.tipo === filterType;
+      const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+    setAllDevices(sortDevices(filtered, sortBy));
+  }, [baseDevices, search, filterType, filterStatus, sortBy]);
 
   const sectorTotals = useMemo(() => {
     const totals = allDevices.reduce((acc, d) => {
