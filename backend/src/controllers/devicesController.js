@@ -33,7 +33,7 @@ const getMissingFields = (data) =>
  */
 const getDevices = async (req, res) => {
   try {
-    const { search, type, status, page = 1, limit = 20 } = req.query;
+    const { search, type, status, setor, page = 1, limit = 20 } = req.query;
 
     let devices = await sheetsService.getAllDevices();
 
@@ -56,6 +56,10 @@ const getDevices = async (req, res) => {
 
     if (status && status !== 'all') {
       devices = devices.filter((d) => d.status === status);
+    }
+
+    if (setor && setor !== 'all') {
+      devices = devices.filter((d) => d.setor === setor);
     }
 
     const total = devices.length;

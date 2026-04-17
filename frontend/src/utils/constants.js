@@ -23,7 +23,7 @@ export const EQUIPMENT_TYPES = [
   'Impressora A4',
 ];
 
-export const STATUS_OPTIONS = ['Ativo', 'Em manutenção', 'Inativo'];
+export const STATUS_OPTIONS = ['Ativo', 'Em manutenÃ§Ã£o', 'Inativo'];
 
 export const SECTORS = [
   'Esteira',
@@ -38,15 +38,17 @@ export const SECTORS = [
 ];
 
 export const STATUS_COLORS = {
-  Ativo: { bg: '#dcfce7', text: '#166534', border: '#86efac' },
-  'Em manutenção': { bg: '#fef3c7', text: '#92400e', border: '#fcd34d' },
-  Inativo: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
+  Ativo: { bg: 'rgba(34,197,94,0.15)', text: '#86efac', border: 'rgba(34,197,94,0.35)' },
+  Inativo: { bg: 'rgba(239,68,68,0.15)', text: '#fca5a5', border: 'rgba(239,68,68,0.35)' },
+  'Em manutenção': { bg: 'rgba(249,115,22,0.15)', text: '#fdba74', border: 'rgba(249,115,22,0.35)' },
+  'Em manutenÃ§Ã£o': { bg: 'rgba(249,115,22,0.15)', text: '#fdba74', border: 'rgba(249,115,22,0.35)' },
 };
 
 export const STATUS_ICONS = {
   Ativo: 'OK',
-  'Em manutenção': 'TOOL',
   Inativo: 'X',
+  'Em manutenção': 'TOOL',
+  'Em manutenÃ§Ã£o': 'TOOL',
 };
 
 export const TYPE_ICONS = {
@@ -67,4 +69,15 @@ export const TYPE_ICONS = {
   'Berco de PDA': 'CRD',
   Tablet: 'TAB',
   'Impressora A4': 'A4',
+};
+
+export const SECTOR_ALIASES = {
+  'Expedição': 'Expedicao',
+  Expedicao: 'Expedicao',
+  'Operações': 'Operacao',
+  Operacoes: 'Operacao',
+  'Operação': 'Operacao',
+  Administracao: 'ADM',
+  'Administração': 'ADM',
+  Fulfillment: 'Fullfilment',
 };

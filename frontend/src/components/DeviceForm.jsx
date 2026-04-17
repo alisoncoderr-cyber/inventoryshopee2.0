@@ -10,11 +10,11 @@ import { EQUIPMENT_TYPES, SECTORS, STATUS_OPTIONS } from '../utils/constants';
 const inputStyle = {
   width: '100%',
   padding: '9px 12px',
-  border: '1px solid #d1d5db',
+  border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: 8,
   fontSize: 14,
-  color: '#111827',
-  background: '#fff',
+  color: '#f8fafc',
+  background: '#111111',
   boxSizing: 'border-box',
   outline: 'none',
   transition: 'border-color 0.15s',
@@ -25,7 +25,7 @@ const labelStyle = {
   display: 'block',
   fontSize: 12,
   fontWeight: 600,
-  color: '#374151',
+  color: '#d1d5db',
   marginBottom: 5,
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
@@ -181,7 +181,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.72)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -192,13 +192,14 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     >
       <div
         style={{
-          background: '#fff',
-          borderRadius: 14,
+          background: 'linear-gradient(180deg, rgba(24,24,24,0.98), rgba(12,12,12,0.98))',
+          borderRadius: 18,
           width: '100%',
           maxWidth: 680,
           maxHeight: '90vh',
           overflow: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          border: '1px solid rgba(249,115,22,0.14)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
         }}
       >
         <div
@@ -207,18 +208,18 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: isMobile ? '16px 16px 14px' : '20px 24px',
-            borderBottom: '1px solid #f3f4f6',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
             position: 'sticky',
             top: 0,
-            background: '#fff',
+            background: 'rgba(18,18,18,0.96)',
             zIndex: 1,
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
               {isEditing ? 'Editar Equipamento' : 'Novo Equipamento'}
             </h2>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#6b7280' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#9ca3af' }}>
               {isEditing ? 'Atualize os dados do equipamento.' : 'Preencha os dados para cadastrar.'}
             </p>
           </div>
@@ -226,7 +227,8 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
             onClick={onClose}
             style={{
               border: 'none',
-              background: '#f3f4f6',
+              background: '#1f1f1f',
+              color: '#fdba74',
               borderRadius: 8,
               width: 32,
               height: 32,
@@ -245,12 +247,12 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
           {apiError && (
             <div
               style={{
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
+                background: 'rgba(239,68,68,0.12)',
+                border: '1px solid rgba(239,68,68,0.28)',
                 borderRadius: 8,
                 padding: 12,
                 marginBottom: 20,
-                color: '#dc2626',
+                color: '#fecaca',
                 fontSize: 13,
               }}
             >
@@ -262,19 +264,19 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
             <div style={{ gridColumn: '1 / -1' }}>
               <Field label="Nome do Dispositivo" required>
                 <input
-                  style={{ ...inputStyle, borderColor: errors.nome_dispositivo ? '#ef4444' : '#d1d5db' }}
+                  style={{ ...inputStyle, borderColor: errors.nome_dispositivo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                   name="nome_dispositivo"
                   value={formData.nome_dispositivo}
                   onChange={handleChange}
                   placeholder="Ex: PDA-001, Desktop-Recebimento-01"
                 />
-                {errors.nome_dispositivo && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.nome_dispositivo}</span>}
+                {errors.nome_dispositivo && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.nome_dispositivo}</span>}
               </Field>
             </div>
 
             <Field label="Tipo de Equipamento" required>
               <select
-                style={{ ...inputStyle, borderColor: errors.tipo ? '#ef4444' : '#d1d5db' }}
+                style={{ ...inputStyle, borderColor: errors.tipo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="tipo"
                 value={formData.tipo}
                 onChange={handleChange}
@@ -286,7 +288,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                   </option>
                 ))}
               </select>
-              {errors.tipo && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.tipo}</span>}
+              {errors.tipo && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.tipo}</span>}
             </Field>
 
             <Field label="Status">
@@ -301,40 +303,40 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
 
             <Field label="Marca" required>
               <input
-                style={{ ...inputStyle, borderColor: errors.marca ? '#ef4444' : '#d1d5db' }}
+                style={{ ...inputStyle, borderColor: errors.marca ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="marca"
                 value={formData.marca}
                 onChange={handleChange}
                 placeholder="Ex: Zebra, HP, Dell, Honeywell"
               />
-              {errors.marca && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.marca}</span>}
+              {errors.marca && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.marca}</span>}
             </Field>
 
             <Field label="Modelo" required>
               <input
-                style={{ ...inputStyle, borderColor: errors.modelo ? '#ef4444' : '#d1d5db' }}
+                style={{ ...inputStyle, borderColor: errors.modelo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="modelo"
                 value={formData.modelo}
                 onChange={handleChange}
                 placeholder="Ex: TC52, EliteBook 840"
               />
-              {errors.modelo && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.modelo}</span>}
+              {errors.modelo && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.modelo}</span>}
             </Field>
 
             <Field label="Numero de Serie" required>
               <input
-                style={{ ...inputStyle, borderColor: errors.numero_serie ? '#ef4444' : '#d1d5db' }}
+                style={{ ...inputStyle, borderColor: errors.numero_serie ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="numero_serie"
                 value={formData.numero_serie}
                 onChange={handleChange}
                 placeholder="Ex: SN123456789"
               />
-              {errors.numero_serie && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.numero_serie}</span>}
+              {errors.numero_serie && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.numero_serie}</span>}
             </Field>
 
             <Field label="Setor" required>
               <select
-                style={{ ...inputStyle, borderColor: errors.setor ? '#ef4444' : '#d1d5db' }}
+                style={{ ...inputStyle, borderColor: errors.setor ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="setor"
                 value={formData.setor}
                 onChange={handleChange}
@@ -346,7 +348,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                   </option>
                 ))}
               </select>
-              {errors.setor && <span style={{ fontSize: 11, color: '#ef4444' }}>{errors.setor}</span>}
+              {errors.setor && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.setor}</span>}
             </Field>
 
             {showAssignedPersonField && (
@@ -396,7 +398,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                     onChange={(event) => setBulkSerials(event.target.value)}
                     placeholder={'Ex:\nSN123456\nSN123457\nSN123458'}
                   />
-                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>
                     Cole um numero de serie por linha para cadastrar varios equipamentos de uma vez em uma unica operacao.
                   </div>
                 </Field>
@@ -412,7 +414,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               flexDirection: isMobile ? 'column-reverse' : 'row',
               marginTop: 24,
               paddingTop: 20,
-              borderTop: '1px solid #f3f4f6',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
             }}
           >
             <button
@@ -421,9 +423,9 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
               style={{
                 padding: '10px 20px',
                 borderRadius: 8,
-                border: '1px solid #d1d5db',
-                background: '#fff',
-                color: '#374151',
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: '#1a1a1a',
+                color: '#f8fafc',
                 cursor: 'pointer',
                 fontSize: 14,
                 fontWeight: 500,
@@ -440,8 +442,8 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                 padding: '10px 24px',
                 borderRadius: 8,
                 border: 'none',
-                background: loading ? '#9ca3af' : '#2563eb',
-                color: '#fff',
+                background: loading ? '#71717a' : 'linear-gradient(135deg, #f97316, #fb923c)',
+                color: '#111111',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 fontSize: 14,
                 fontWeight: 600,
