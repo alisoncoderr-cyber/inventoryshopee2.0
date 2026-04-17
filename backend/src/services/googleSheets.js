@@ -29,8 +29,8 @@ const HEADERS = [
 
 const HEADER_LABELS = [
   'ID',
-  'Identificacao',
-  'Categoria',
+  'Identificacao Interna',
+  'Tipo de Equipamento',
   'Marca',
   'Modelo',
   'Numero de Serie',
@@ -43,7 +43,7 @@ const HEADER_LABELS = [
   'Pessoa Atribuida',
 ];
 
-const COLUMN_WIDTHS = [210, 220, 140, 120, 160, 180, 140, 130, 120, 130, 130, 260, 180];
+const COLUMN_WIDTHS = [210, 220, 180, 120, 160, 180, 140, 130, 120, 130, 130, 260, 180];
 
 const getSheetRange = (range) => {
   const escapedSheetName = SHEET_NAME.replace(/'/g, "''");
@@ -147,6 +147,20 @@ const ensureSheetFormatting = async (sheets, sheetId) => {
               dimension: 'COLUMNS',
               startIndex: 0,
               endIndex: 1,
+            },
+            properties: {
+              hiddenByUser: true,
+            },
+            fields: 'hiddenByUser',
+          },
+        },
+        {
+          updateDimensionProperties: {
+            range: {
+              sheetId,
+              dimension: 'COLUMNS',
+              startIndex: 1,
+              endIndex: 2,
             },
             properties: {
               hiddenByUser: true,

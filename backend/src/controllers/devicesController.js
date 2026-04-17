@@ -9,7 +9,7 @@ const sheetsService = require('../services/googleSheets');
 const VALID_STATUSES = ['Ativo', 'Em manutenção', 'Inativo'];
 
 const sanitizeDevicePayload = (payload = {}) => ({
-  nome_dispositivo: payload.nome_dispositivo?.trim(),
+  nome_dispositivo: payload.nome_dispositivo?.trim() || payload.tipo?.trim(),
   tipo: payload.tipo?.trim(),
   marca: payload.marca?.trim(),
   modelo: payload.modelo?.trim(),

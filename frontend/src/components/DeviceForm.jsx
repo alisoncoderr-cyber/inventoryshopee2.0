@@ -73,7 +73,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   useEffect(() => {
     if (device) {
       setFormData({
-        nome_dispositivo: device.nome_dispositivo || '',
+        nome_dispositivo: device.nome_dispositivo || device.tipo || '',
         tipo: device.tipo || '',
         marca: device.marca || '',
         modelo: device.modelo || '',
@@ -96,6 +96,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
         return {
           ...prev,
           [name]: value,
+          nome_dispositivo: value,
           pessoa_atribuida: value === 'Laptop' ? prev.pessoa_atribuida : '',
         };
       }
@@ -112,7 +113,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
       .filter(Boolean);
 
   const validate = () => {
-    const required = ['nome_dispositivo', 'tipo', 'marca', 'modelo', 'setor'];
+    const required = ['tipo', 'marca', 'modelo', 'setor'];
     const nextErrors = {};
 
     required.forEach((field) => {
@@ -130,13 +131,17 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
 
   const buildBulkDevices = () => {
     const serialList = getBulkSerialList();
+    const normalizedFormData = {
+      ...formData,
+      nome_dispositivo: formData.tipo,
+    };
 
     if (serialList.length === 0) {
-      return [formData];
+      return [normalizedFormData];
     }
 
     return serialList.map((serial) => ({
-      ...formData,
+      ...normalizedFormData,
       numero_serie: serial,
     }));
   };
@@ -157,7 +162,10 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
 
     try {
       if (isEditing) {
-        await updateDevice(device.id, formData);
+        await updateDevice(device.id, {
+          ...formData,
+          nome_dispositivo: formData.tipo,
+        });
       } else {
         const devicesToCreate = buildBulkDevices();
 
@@ -261,20 +269,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <Field label="Identificacao" required>
-                <input
-                  style={{ ...inputStyle, borderColor: errors.nome_dispositivo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
-                  name="nome_dispositivo"
-                  value={formData.nome_dispositivo}
-                  onChange={handleChange}
-                  placeholder="Ex: PDA-001, Desktop-Recebimento-01"
-                />
-                {errors.nome_dispositivo && <span style={{ fontSize: 11, color: '#fca5a5' }}>{errors.nome_dispositivo}</span>}
-              </Field>
-            </div>
-
-            <Field label="Categoria" required>
+            <Field label="Tipo de Equipamento" required>
               <select
                 style={{ ...inputStyle, borderColor: errors.tipo ? '#ef4444' : 'rgba(255,255,255,0.08)' }}
                 name="tipo"
