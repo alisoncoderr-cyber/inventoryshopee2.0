@@ -53,7 +53,7 @@ const Dashboard = () => {
   const setorData = useMemo(() => Object.entries(stats?.por_setor || {}).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 7), [stats]);
   const tipoData = useMemo(() => Object.entries(stats?.por_tipo || {}).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 6), [stats]);
 
-  if (loading) return <div style={{ ...cardStyle, padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Carregando dashboard executivo...</div>;
+  if (loading) return <div style={{ ...cardStyle, padding: 32, minHeight: 120 }} />;
   if (error) return <div style={{ ...cardStyle, padding: 24, color: '#fecaca', background: 'rgba(239,68,68,.12)', borderColor: 'rgba(239,68,68,.28)' }}>Erro ao carregar dashboard: {error}</div>;
   if (!stats) return null;
 
