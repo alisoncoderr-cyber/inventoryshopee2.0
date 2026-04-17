@@ -1,6 +1,6 @@
 // ============================================================
 // services/googleSheets.js
-// Serviço de integração com Google Sheets via API
+// Integracao com Google Sheets
 // ============================================================
 
 const fs = require('fs');
@@ -11,99 +11,6 @@ const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID?.trim();
 const SHEET_NAME = process.env.GOOGLE_SHEET_NAME?.trim() || 'Equipamentos';
 const CREDENTIALS_PATH = path.resolve(__dirname, '../../credentials.json');
 
-const getSheetRange = (range) => {
-  const escapedSheetName = SHEET_NAME.replace(/'/g, "''");
-  return `'${escapedSheetName}'!${range}`;
-};
-
-const normalizePrivateKey = (privateKey = '') => {
-  return privateKey.replace(/\\n/g, '\n').trim();
-};
-
-const getCredentialsFromEnv = () => {
-  const projectId = process.env.GOOGLE_PROJECT_ID?.trim();
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
-  const privateKey = normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY);
-
-  if (!projectId || !clientEmail || !privateKey) {
-    return null;
-  }
-
-  return {
-    type: 'service_account',
-    project_id: projectId,
-    client_email: clientEmail,
-    private_key: privateKey,
-  };
-};
-
-const getCredentialsFromFile = () => {
-  if (!fs.existsSync(CREDENTIALS_PATH)) {
-    return null;
-  }
-
-  const raw = fs.readFileSync(CREDENTIALS_PATH, 'utf-8');
-  const parsed = JSON.parse(raw);
-
-  return {
-    type: 'service_account',
-    project_id: parsed.project_id?.trim(),
-    client_email: parsed.client_email?.trim(),
-    private_key: normalizePrivateKey(parsed.private_key),
-  };
-};
-
-const getGoogleCredentials = () => {
-  const envCredentials = getCredentialsFromEnv();
-  if (envCredentials) {
-    return envCredentials;
-  }
-
-  const fileCredentials = getCredentialsFromFile();
-  if (fileCredentials) {
-    return fileCredentials;
-  }
-
-  throw new Error(
-    'Credenciais do Google nÃ£o encontradas. Configure as variÃ¡veis GOOGLE_PROJECT_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY ou mantenha um arquivo backend/credentials.json vÃ¡lido.'
-  );
-};
-
-const validateSheetsConfig = () => {
-  if (!SPREADSHEET_ID) {
-    throw new Error('GOOGLE_SPREADSHEET_ID nÃ£o foi configurado.');
-  }
-};
-
-/**
- * Cria e retorna um cliente autenticado do Google Sheets
- * Utiliza Service Account para autenticação server-to-server
- */
-const getAuthClient = () => {
-  validateSheetsConfig();
-  const credentials = getGoogleCredentials();
-
-  const auth = new google.auth.GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-
-  return auth;
-};
-
-/**
- * Retorna instância do Sheets API autenticada
- */
-const getSheetsClient = async () => {
-  const auth = getAuthClient();
-  const sheets = google.sheets({ version: 'v4', auth });
-  return sheets;
-};
-
-/**
- * Cabeçalhos da planilha - ordem das colunas
- * IMPORTANTE: A ordem aqui deve corresponder exatamente à planilha
- */
 const HEADERS = [
   'id',
   'nome_dispositivo',
@@ -120,13 +27,95 @@ const HEADERS = [
   'pessoa_atribuida',
 ];
 
+const HEADER_LABELS = [
+  'ID',
+  'Nome do Dispositivo',
+  'Tipo',
+  'Marca',
+  'Modelo',
+  'Numero de Serie',
+  'Setor',
+  'Status',
+  'Ticket',
+  'Data de Aquisicao',
+  'Data de Cadastro',
+  'Observacoes',
+  'Pessoa Atribuida',
+];
+
+const COLUMN_WIDTHS = [210, 220, 140, 120, 160, 180, 140, 130, 120, 130, 130, 260, 180];
+
+const getSheetRange = (range) => {
+  const escapedSheetName = SHEET_NAME.replace(/'/g, "''");
+  return `'${escapedSheetName}'!${range}`;
+};
+
+const normalizePrivateKey = (privateKey = '') => privateKey.replace(/\\n/g, '\n').trim();
 const normalizeSerial = (value = '') => String(value).trim().toLowerCase();
 
-/**
- * Converte uma linha do Sheets (array) em objeto JavaScript
- * @param {Array} row - Linha da planilha
- * @returns {Object} Objeto com campos nomeados
- */
+const getCredentialsFromEnv = () => {
+  const projectId = process.env.GOOGLE_PROJECT_ID?.trim();
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+  const privateKey = normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY);
+
+  if (!projectId || !clientEmail || !privateKey) return null;
+
+  return {
+    type: 'service_account',
+    project_id: projectId,
+    client_email: clientEmail,
+    private_key: privateKey,
+  };
+};
+
+const getCredentialsFromFile = () => {
+  if (!fs.existsSync(CREDENTIALS_PATH)) return null;
+
+  const raw = fs.readFileSync(CREDENTIALS_PATH, 'utf-8');
+  const parsed = JSON.parse(raw);
+
+  return {
+    type: 'service_account',
+    project_id: parsed.project_id?.trim(),
+    client_email: parsed.client_email?.trim(),
+    private_key: normalizePrivateKey(parsed.private_key),
+  };
+};
+
+const getGoogleCredentials = () => {
+  const envCredentials = getCredentialsFromEnv();
+  if (envCredentials) return envCredentials;
+
+  const fileCredentials = getCredentialsFromFile();
+  if (fileCredentials) return fileCredentials;
+
+  throw new Error(
+    'Credenciais do Google nao encontradas. Configure GOOGLE_PROJECT_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY ou mantenha backend/credentials.json valido.'
+  );
+};
+
+const validateSheetsConfig = () => {
+  if (!SPREADSHEET_ID) {
+    throw new Error('GOOGLE_SPREADSHEET_ID nao foi configurado.');
+  }
+};
+
+const getAuthClient = () => {
+  validateSheetsConfig();
+  return new google.auth.GoogleAuth({
+    credentials: getGoogleCredentials(),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+};
+
+const getSheetsClient = async () => {
+  const auth = getAuthClient();
+  return google.sheets({ version: 'v4', auth });
+};
+
+const getSheetByName = (spreadsheet) =>
+  spreadsheet.data.sheets?.find((sheet) => sheet.properties.title === SHEET_NAME);
+
 const rowToObject = (row) => {
   const obj = {};
   HEADERS.forEach((header, index) => {
@@ -135,40 +124,126 @@ const rowToObject = (row) => {
   return obj;
 };
 
-/**
- * Converte um objeto JavaScript em linha do Sheets (array)
- * @param {Object} obj - Objeto com dados do equipamento
- * @returns {Array} Array na ordem correta dos headers
- */
-const objectToRow = (obj) => {
-  return HEADERS.map((header) => obj[header] || '');
+const objectToRow = (obj) => HEADERS.map((header) => obj[header] || '');
+
+const ensureSheetFormatting = async (sheets, sheetId) => {
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          updateSheetProperties: {
+            properties: {
+              sheetId,
+              gridProperties: { frozenRowCount: 1 },
+            },
+            fields: 'gridProperties.frozenRowCount',
+          },
+        },
+        {
+          updateDimensionProperties: {
+            range: {
+              sheetId,
+              dimension: 'COLUMNS',
+              startIndex: 0,
+              endIndex: 1,
+            },
+            properties: {
+              hiddenByUser: true,
+            },
+            fields: 'hiddenByUser',
+          },
+        },
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: 1,
+              startColumnIndex: 0,
+              endColumnIndex: HEADERS.length,
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: { red: 0.96, green: 0.45, blue: 0.09 },
+                horizontalAlignment: 'CENTER',
+                verticalAlignment: 'MIDDLE',
+                textFormat: {
+                  foregroundColor: { red: 1, green: 1, blue: 1 },
+                  fontSize: 10,
+                  bold: true,
+                },
+              },
+            },
+            fields:
+              'userEnteredFormat(backgroundColor,horizontalAlignment,verticalAlignment,textFormat)',
+          },
+        },
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 1,
+              startColumnIndex: 0,
+              endColumnIndex: HEADERS.length,
+            },
+            cell: {
+              userEnteredFormat: {
+                verticalAlignment: 'MIDDLE',
+                wrapStrategy: 'WRAP',
+              },
+            },
+            fields: 'userEnteredFormat(verticalAlignment,wrapStrategy)',
+          },
+        },
+        {
+          setBasicFilter: {
+            filter: {
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                startColumnIndex: 0,
+                endColumnIndex: HEADERS.length,
+              },
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: COLUMN_WIDTHS.map((pixelSize, index) => ({
+        updateDimensionProperties: {
+          range: {
+            sheetId,
+            dimension: 'COLUMNS',
+            startIndex: index,
+            endIndex: index + 1,
+          },
+          properties: { pixelSize },
+          fields: 'pixelSize',
+        },
+      })),
+    },
+  });
 };
 
-/**
- * Busca todos os equipamentos da planilha
- * @returns {Array} Lista de equipamentos
- */
 const getAllDevices = async () => {
   const sheets = await getSheetsClient();
-
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: getSheetRange('A:M'),
   });
 
   const rows = response.data.values || [];
-
-  // Remove a primeira linha (cabeçalhos) e converte para objetos
   if (rows.length <= 1) return [];
 
   return rows.slice(1).map(rowToObject);
 };
 
-/**
- * Busca um equipamento pelo ID
- * @param {string} id - ID do equipamento
- * @returns {Object|null} Equipamento encontrado ou null
- */
 const getDeviceById = async (id) => {
   const devices = await getAllDevices();
   return devices.find((d) => d.id === id) || null;
@@ -189,19 +264,13 @@ const findDeviceBySerial = async (serial, ignoreId = null) => {
   );
 };
 
-/**
- * Cria a linha de cabeçalho na planilha (caso não exista)
- * Chamado na inicialização do servidor
- */
 const initializeSheet = async () => {
   const sheets = await getSheetsClient();
   const spreadsheet = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
   });
 
-  const existingSheet = spreadsheet.data.sheets?.find(
-    (sheet) => sheet.properties.title === SHEET_NAME
-  );
+  let existingSheet = getSheetByName(spreadsheet);
 
   if (!existingSheet) {
     await sheets.spreadsheets.batchUpdate({
@@ -218,10 +287,14 @@ const initializeSheet = async () => {
         ],
       },
     });
+
+    const refreshedSpreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+    existingSheet = getSheetByName(refreshedSpreadsheet);
     console.log(`Aba "${SHEET_NAME}" criada na planilha`);
   }
 
-  // Verifica se já existe cabeçalho
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: getSheetRange('A1:M1'),
@@ -230,26 +303,40 @@ const initializeSheet = async () => {
   const existingHeaders = response.data.values?.[0] || [];
 
   if (existingHeaders.length === 0) {
-    // Cria os cabeçalhos
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: getSheetRange('A1:M1'),
       valueInputOption: 'RAW',
       requestBody: {
-        values: [HEADERS],
+        values: [HEADER_LABELS],
       },
     });
-    console.log('✅ Cabeçalhos criados na planilha');
+    console.log('Cabecalhos criados na planilha');
   } else {
-    console.log('✅ Planilha já inicializada');
+    const normalizedHeaders = existingHeaders.map((value) => String(value).trim().toLowerCase());
+    const needsFriendlyHeaders = normalizedHeaders.some((value) => HEADERS.includes(value));
+
+    if (needsFriendlyHeaders) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: getSheetRange('A1:M1'),
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [HEADER_LABELS],
+        },
+      });
+      console.log('Cabecalhos da planilha atualizados');
+    } else {
+      console.log('Planilha ja inicializada');
+    }
+  }
+
+  if (existingSheet?.properties?.sheetId !== undefined) {
+    await ensureSheetFormatting(sheets, existingSheet.properties.sheetId);
+    console.log('Formatacao da planilha aplicada');
   }
 };
 
-/**
- * Adiciona um novo equipamento na planilha
- * @param {Object} device - Dados do equipamento
- * @returns {Object} Equipamento criado
- */
 const createDevice = async (device) => {
   const sheets = await getSheetsClient();
   const row = objectToRow(device);
@@ -284,34 +371,21 @@ const createDevicesBulk = async (devices) => {
   return devices;
 };
 
-/**
- * Atualiza um equipamento existente na planilha
- * @param {string} id - ID do equipamento
- * @param {Object} updatedData - Dados atualizados
- * @returns {Object|null} Equipamento atualizado ou null se não encontrado
- */
 const updateDevice = async (id, updatedData) => {
   const sheets = await getSheetsClient();
-
-  // Busca todas as linhas para encontrar o índice
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: getSheetRange('A:M'),
   });
 
   const rows = response.data.values || [];
-
-  // Encontra a linha pelo ID (linha 0 é cabeçalho, linha 1 em diante são dados)
   const rowIndex = rows.findIndex((row, index) => index > 0 && row[0] === id);
 
   if (rowIndex === -1) return null;
 
-  // Monta objeto completo com dados existentes + atualizações
   const existingDevice = rowToObject(rows[rowIndex]);
   const mergedDevice = { ...existingDevice, ...updatedData, id };
   const updatedRow = objectToRow(mergedDevice);
-
-  // Linha no Sheets é 1-indexed, +1 para pular o cabeçalho
   const sheetRowNumber = rowIndex + 1;
 
   await sheets.spreadsheets.values.update({
@@ -326,16 +400,8 @@ const updateDevice = async (id, updatedData) => {
   return mergedDevice;
 };
 
-/**
- * Remove um equipamento da planilha
- * Utiliza batchUpdate para deletar a linha física
- * @param {string} id - ID do equipamento
- * @returns {boolean} true se deletado, false se não encontrado
- */
 const deleteDevice = async (id) => {
   const sheets = await getSheetsClient();
-
-  // Busca todas as linhas
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: getSheetRange('A:A'),
@@ -346,20 +412,15 @@ const deleteDevice = async (id) => {
 
   if (rowIndex === -1) return false;
 
-  // Busca o sheetId da aba pelo nome
   const spreadsheet = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
   });
+  const sheet = getSheetByName(spreadsheet);
 
-  const sheet = spreadsheet.data.sheets.find(
-    (s) => s.properties.title === SHEET_NAME
-  );
+  if (!sheet) {
+    throw new Error(`Aba "${SHEET_NAME}" nao encontrada`);
+  }
 
-  if (!sheet) throw new Error(`Aba "${SHEET_NAME}" não encontrada`);
-
-  const sheetId = sheet.properties.sheetId;
-
-  // Deleta a linha usando batchUpdate
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
@@ -367,9 +428,9 @@ const deleteDevice = async (id) => {
         {
           deleteDimension: {
             range: {
-              sheetId: sheetId,
+              sheetId: sheet.properties.sheetId,
               dimension: 'ROWS',
-              startIndex: rowIndex,   // 0-indexed
+              startIndex: rowIndex,
               endIndex: rowIndex + 1,
             },
           },
