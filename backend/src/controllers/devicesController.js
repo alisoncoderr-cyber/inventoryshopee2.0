@@ -27,12 +27,27 @@ const getMissingFields = (data) =>
     .filter(([_, value]) => !value)
     .map(([key]) => key);
 
-const normalizeSector = (value = '') =>
-  String(value)
+const normalizeSector = (value = '') => {
+  const raw = String(value).trim();
+  const aliases = {
+    'Operação': 'operacao',
+    'Operacoes': 'operacao',
+    'Operações': 'operacao',
+    'OperaÃ§Ã£o': 'operacao',
+    'OperaÃ§Ãµes': 'operacao',
+    'Expedição': 'expedicao',
+    'ExpediÃ§Ã£o': 'expedicao',
+    Fulfillment: 'fullfilment',
+  };
+
+  if (aliases[raw]) return aliases[raw];
+
+  return raw
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toLowerCase();
+};
 
 /**
  * Lista todos os equipamentos com suporte a filtros e busca
