@@ -196,6 +196,17 @@ const syncRowMetadata = async (sheets, updates) => {
   });
 };
 
+const clearOrphanMetadataRows = async (sheets, rowNumbers) => {
+  if (rowNumbers.length === 0) return;
+
+  await sheets.spreadsheets.values.batchClear({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      ranges: rowNumbers.map((rowNumber) => getSheetRange(`A${rowNumber}:M${rowNumber}`)),
+    },
+  });
+};
+
 const getDevicesFromSheet = async () => {
   const sheets = await getSheetsClient();
   const { rows } = await loadSheetRows(sheets);
@@ -203,12 +214,18 @@ const getDevicesFromSheet = async () => {
   if (rows.length <= 1) return [];
 
   const metadataUpdates = [];
+  const orphanRows = [];
   const devices = [];
 
   rows.slice(1).forEach(({ rowNumber, values }) => {
     const device = rowToObject(values);
 
-    if (!hasVisibleData(device)) return;
+    if (!hasVisibleData(device)) {
+      if (device.id || device.nome_dispositivo) {
+        orphanRows.push(rowNumber);
+      }
+      return;
+    }
 
     let nextId = device.id;
     let nextName = device.nome_dispositivo;
@@ -233,6 +250,7 @@ const getDevicesFromSheet = async () => {
   });
 
   await syncRowMetadata(sheets, metadataUpdates);
+  await clearOrphanMetadataRows(sheets, orphanRows);
 
   return devices;
 };
