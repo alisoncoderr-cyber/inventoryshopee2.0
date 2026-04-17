@@ -152,9 +152,9 @@ const Devices = () => {
       <section style={{ ...cardStyle, padding: isMobile ? 22 : 30, background: 'radial-gradient(circle at top right, rgba(249,115,22,.22), transparent 26%), linear-gradient(135deg,#111 0%,#1a1a1a 56%,#2a1608 100%)', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Operacao de equipamentos Shopee</div>
-            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.06 }}>Central mais profissional para localizar, filtrar e agir por setor com mais rapidez</h1>
-            <p style={{ margin: 0, color: '#fed7aa', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Mantive o que ja funcionava e deixei a tela mais completa para gestao: filtro dedicado por setor, exportacao, visao operacional e atalhos para manutencao e acompanhamento.</p>
+            <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
+            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.06 }}>Controle operacional de equipamentos</h1>
+            <p style={{ margin: 0, color: '#fed7aa', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Consulta, filtros, acompanhamento de manutencao e acoes da base em um unico painel.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <button onClick={() => downloadCsv(allDevices)} style={{ ...buttonBase, background: '#fff', color: '#111' }}>Exportar CSV</button>

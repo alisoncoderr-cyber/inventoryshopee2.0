@@ -67,9 +67,9 @@ const Dashboard = () => {
         <div style={{ position: 'absolute', right: -40, top: -40, width: 220, height: 220, borderRadius: '50%', background: 'rgba(249,115,22,.08)' }} />
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 620 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#fdba74' }}>Shopee Inventory Command</div>
-            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.1 }}>Painel operacional mais executivo para leitura rapida do inventario</h1>
-            <p style={{ margin: 0, maxWidth: 560, color: '#fed7aa', fontSize: 14, lineHeight: 1.7 }}>Abertura mais profissional com foco em volume, manutencao, tickets e distribuicao por setor, tudo dentro da identidade preto com laranja.</p>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#fdba74' }}>Dashboard</div>
+            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.1 }}>Visao geral do inventario</h1>
+            <p style={{ margin: 0, maxWidth: 560, color: '#fed7aa', fontSize: 14, lineHeight: 1.7 }}>Indicadores, distribuicao por setor e acompanhamento da operacao em tempo real.</p>
           </div>
           <div style={{ minWidth: isMobile ? '100%' : 260, maxWidth: 300, padding: 18, borderRadius: 18, background: 'rgba(17,17,17,.62)', border: '1px solid rgba(249,115,22,.15)', backdropFilter: 'blur(10px)' }}>
             <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.05em' }}>Saude da operacao</div>
