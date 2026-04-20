@@ -8,6 +8,15 @@ const sheetsService = require('../services/googleSheets');
 
 const VALID_STATUSES = ['Ativo', 'Em manutenção', 'Inativo'];
 
+const handleControllerError = (res, logMessage, fallbackMessage, error) => {
+  console.error(logMessage, error);
+  res.status(error.statusCode || 500).json({
+    success: false,
+    message: error.message || fallbackMessage,
+    error: error.statusCode ? undefined : error.message,
+  });
+};
+
 const sanitizeDevicePayload = (payload = {}) => ({
   nome_dispositivo: payload.nome_dispositivo?.trim() || payload.tipo?.trim(),
   tipo: payload.tipo?.trim(),
@@ -102,12 +111,7 @@ const getDevices = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Erro ao buscar equipamentos:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao buscar equipamentos',
-      error: error.message,
-    });
+    handleControllerError(res, 'Erro ao buscar equipamentos:', 'Erro ao buscar equipamentos', error);
   }
 };
 
@@ -128,12 +132,7 @@ const getDeviceById = async (req, res) => {
 
     res.json({ success: true, data: device });
   } catch (error) {
-    console.error('Erro ao buscar equipamento:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao buscar equipamento',
-      error: error.message,
-    });
+    handleControllerError(res, 'Erro ao buscar equipamento:', 'Erro ao buscar equipamento', error);
   }
 };
 
@@ -212,12 +211,7 @@ const createDevice = async (req, res) => {
       data: created,
     });
   } catch (error) {
-    console.error('Erro ao criar equipamento:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao criar equipamento',
-      error: error.message,
-    });
+    handleControllerError(res, 'Erro ao criar equipamento:', 'Erro ao criar equipamento', error);
   }
 };
 
@@ -326,12 +320,12 @@ const createDevicesBulk = async (req, res) => {
       data: createdDevices,
     });
   } catch (error) {
-    console.error('Erro ao criar equipamentos em lote:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao criar equipamentos em lote',
-      error: error.message,
-    });
+    handleControllerError(
+      res,
+      'Erro ao criar equipamentos em lote:',
+      'Erro ao criar equipamentos em lote',
+      error
+    );
   }
 };
 
@@ -386,12 +380,7 @@ const updateDevice = async (req, res) => {
       data: updated,
     });
   } catch (error) {
-    console.error('Erro ao atualizar equipamento:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao atualizar equipamento',
-      error: error.message,
-    });
+    handleControllerError(res, 'Erro ao atualizar equipamento:', 'Erro ao atualizar equipamento', error);
   }
 };
 
@@ -415,12 +404,7 @@ const deleteDevice = async (req, res) => {
       message: 'Equipamento removido com sucesso',
     });
   } catch (error) {
-    console.error('Erro ao deletar equipamento:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao deletar equipamento',
-      error: error.message,
-    });
+    handleControllerError(res, 'Erro ao deletar equipamento:', 'Erro ao deletar equipamento', error);
   }
 };
 
@@ -477,12 +461,7 @@ const getDashboardStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Erro ao buscar estatisticas:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro ao buscar estatisticas',
-      error: error.message,
-    });
+    handleControllerError(res, 'Erro ao buscar estatisticas:', 'Erro ao buscar estatisticas', error);
   }
 };
 

@@ -66,6 +66,26 @@ const getSheetRange = (range) => {
 
 const normalizePrivateKey = (privateKey = '') => privateKey.replace(/\\n/g, '\n').trim();
 const normalizeSerial = (value = '') => String(value).trim().toLowerCase();
+const SERVICE_UNAVAILABLE_STATUS = 503;
+
+const serviceState = {
+  ready: false,
+  initializing: false,
+  lastError: null,
+  lastSuccessAt: null,
+  lastAttemptAt: null,
+};
+
+let initializationPromise = null;
+
+class SheetsServiceUnavailableError extends Error {
+  constructor(message, cause = null) {
+    super(message);
+    this.name = 'SheetsServiceUnavailableError';
+    this.statusCode = SERVICE_UNAVAILABLE_STATUS;
+    this.cause = cause;
+  }
+}
 
 const getCredentialsFromEnv = () => {
   const projectId = process.env.GOOGLE_PROJECT_ID?.trim();
@@ -107,6 +127,25 @@ const getGoogleCredentials = () => {
     'Credenciais do Google nao encontradas. Configure GOOGLE_PROJECT_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY ou mantenha backend/credentials.json valido.'
   );
 };
+
+const buildServiceUnavailableError = (error) =>
+  new SheetsServiceUnavailableError(
+    error?.message ||
+      'A integracao com Google Sheets nao esta disponivel no momento. Verifique as credenciais e a conectividade.',
+    error
+  );
+
+const updateServiceState = (partialState = {}) => {
+  Object.assign(serviceState, partialState);
+};
+
+const getServiceStatus = () => ({
+  ready: serviceState.ready,
+  initializing: serviceState.initializing,
+  lastError: serviceState.lastError,
+  lastSuccessAt: serviceState.lastSuccessAt,
+  lastAttemptAt: serviceState.lastAttemptAt,
+});
 
 const validateSheetsConfig = () => {
   if (!SPREADSHEET_ID) {
@@ -207,7 +246,23 @@ const clearOrphanMetadataRows = async (sheets, rowNumbers) => {
   });
 };
 
+const ensureSheetReady = async () => {
+  if (serviceState.ready) return;
+
+  await initializeSheet();
+
+  if (!serviceState.ready) {
+    throw buildServiceUnavailableError(
+      new Error(
+        serviceState.lastError ||
+          'A integracao com Google Sheets nao foi inicializada com sucesso.'
+      )
+    );
+  }
+};
+
 const getDevicesFromSheet = async () => {
+  await ensureSheetReady();
   const sheets = await getSheetsClient();
   const { rows } = await loadSheetRows(sheets);
 
@@ -400,79 +455,111 @@ const findDeviceBySerial = async (serial, ignoreId = null) => {
 };
 
 const initializeSheet = async () => {
-  const sheets = await getSheetsClient();
-  const spreadsheet = await sheets.spreadsheets.get({
-    spreadsheetId: SPREADSHEET_ID,
-  });
+  if (initializationPromise) return initializationPromise;
 
-  let existingSheet = getSheetByName(spreadsheet);
+  initializationPromise = (async () => {
+    updateServiceState({
+      initializing: true,
+      lastAttemptAt: new Date().toISOString(),
+    });
 
-  if (!existingSheet) {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      requestBody: {
-        requests: [
-          {
-            addSheet: {
-              properties: {
-                title: SHEET_NAME,
+    try {
+      const sheets = await getSheetsClient();
+      const spreadsheet = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+      });
+
+      let existingSheet = getSheetByName(spreadsheet);
+
+      if (!existingSheet) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: {
+            requests: [
+              {
+                addSheet: {
+                  properties: {
+                    title: SHEET_NAME,
+                  },
+                },
               },
-            },
+            ],
           },
-        ],
-      },
-    });
+        });
 
-    const refreshedSpreadsheet = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-    });
-    existingSheet = getSheetByName(refreshedSpreadsheet);
-    console.log(`Aba "${SHEET_NAME}" criada na planilha`);
-  }
+        const refreshedSpreadsheet = await sheets.spreadsheets.get({
+          spreadsheetId: SPREADSHEET_ID,
+        });
+        existingSheet = getSheetByName(refreshedSpreadsheet);
+        console.log(`Aba "${SHEET_NAME}" criada na planilha`);
+      }
 
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A1:M1'),
-  });
-
-  const existingHeaders = response.data.values?.[0] || [];
-
-  if (existingHeaders.length === 0) {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: getSheetRange('A1:M1'),
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [HEADER_LABELS],
-      },
-    });
-    console.log('Cabecalhos criados na planilha');
-  } else {
-    const normalizedHeaders = existingHeaders.map((value) => String(value).trim().toLowerCase());
-    const needsFriendlyHeaders = normalizedHeaders.some((value) => HEADERS.includes(value));
-
-    if (needsFriendlyHeaders) {
-      await sheets.spreadsheets.values.update({
+      const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: getSheetRange('A1:M1'),
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [HEADER_LABELS],
-        },
       });
-      console.log('Cabecalhos da planilha atualizados');
-    } else {
-      console.log('Planilha ja inicializada');
-    }
-  }
 
-  if (existingSheet?.properties?.sheetId !== undefined) {
-    await ensureSheetFormatting(sheets, existingSheet.properties.sheetId);
-    console.log('Formatacao da planilha aplicada');
-  }
+      const existingHeaders = response.data.values?.[0] || [];
+
+      if (existingHeaders.length === 0) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: getSheetRange('A1:M1'),
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [HEADER_LABELS],
+          },
+        });
+        console.log('Cabecalhos criados na planilha');
+      } else {
+        const normalizedHeaders = existingHeaders.map((value) =>
+          String(value).trim().toLowerCase()
+        );
+        const needsFriendlyHeaders = normalizedHeaders.some((value) => HEADERS.includes(value));
+
+        if (needsFriendlyHeaders) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: getSheetRange('A1:M1'),
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: [HEADER_LABELS],
+            },
+          });
+          console.log('Cabecalhos da planilha atualizados');
+        } else {
+          console.log('Planilha ja inicializada');
+        }
+      }
+
+      if (existingSheet?.properties?.sheetId !== undefined) {
+        await ensureSheetFormatting(sheets, existingSheet.properties.sheetId);
+        console.log('Formatacao da planilha aplicada');
+      }
+
+      updateServiceState({
+        ready: true,
+        initializing: false,
+        lastError: null,
+        lastSuccessAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      updateServiceState({
+        ready: false,
+        initializing: false,
+        lastError: error.message,
+      });
+      throw buildServiceUnavailableError(error);
+    } finally {
+      initializationPromise = null;
+    }
+  })();
+
+  return initializationPromise;
 };
 
 const createDevice = async (device) => {
+  await ensureSheetReady();
   const sheets = await getSheetsClient();
   const row = objectToRow(device);
 
@@ -490,6 +577,7 @@ const createDevice = async (device) => {
 };
 
 const createDevicesBulk = async (devices) => {
+  await ensureSheetReady();
   const sheets = await getSheetsClient();
   const rows = devices.map(objectToRow);
 
@@ -507,6 +595,7 @@ const createDevicesBulk = async (devices) => {
 };
 
 const updateDevice = async (id, updatedData) => {
+  await ensureSheetReady();
   const sheets = await getSheetsClient();
   const devices = await getDevicesFromSheet();
   const existingDevice = devices.find((device) => device.id === id);
@@ -530,6 +619,7 @@ const updateDevice = async (id, updatedData) => {
 };
 
 const deleteDevice = async (id) => {
+  await ensureSheetReady();
   const sheets = await getSheetsClient();
   const devices = await getDevicesFromSheet();
   const existingDevice = devices.find((device) => device.id === id);
@@ -574,5 +664,7 @@ module.exports = {
   createDevicesBulk,
   updateDevice,
   deleteDevice,
+  getServiceStatus,
   initializeSheet,
+  SheetsServiceUnavailableError,
 };

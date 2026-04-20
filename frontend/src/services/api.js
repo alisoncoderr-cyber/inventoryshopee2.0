@@ -6,21 +6,51 @@
 import axios from 'axios';
 
 const DEFAULT_LOCAL_API_URL = 'http://localhost:3001/api';
-const DEFAULT_PRODUCTION_API_URL = 'https://inventoryshopee2-0.onrender.com/api';
+const DEFAULT_PRODUCTION_API_URL = 'https://inventory-backend.onrender.com/api';
+
+const normalizeApiUrl = (value = '') => value.replace(/\/+$/, '');
+
+const isPrivateNetworkHost = (hostname = '') => {
+  if (!hostname) return false;
+
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname.endsWith('.local')
+  ) {
+    return true;
+  }
+
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+
+  const private172 = hostname.match(/^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
+  if (private172) {
+    const secondOctet = Number(private172[1]);
+    return secondOctet >= 16 && secondOctet <= 31;
+  }
+
+  return false;
+};
 
 const resolveApiBaseUrl = () => {
   if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+    return normalizeApiUrl(process.env.REACT_APP_API_URL);
   }
 
   if (typeof window === 'undefined') {
     return DEFAULT_LOCAL_API_URL;
   }
 
-  const { hostname } = window.location;
+  const { hostname, port, origin } = window.location;
 
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return DEFAULT_LOCAL_API_URL;
+  if (isPrivateNetworkHost(hostname)) {
+    if (port === '3000' || port === '5173') {
+      return `http://${hostname}:3001/api`;
+    }
+
+    return `${normalizeApiUrl(origin)}/api`;
   }
 
   if (hostname.endsWith('.vercel.app')) {
