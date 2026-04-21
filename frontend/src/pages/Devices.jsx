@@ -1,25 +1,72 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { deleteDevice, fetchDashboardStats, fetchDevices } from '../services/api';
-import { EQUIPMENT_TYPES, SECTORS, SECTOR_ALIASES, STATUS_COLORS, STATUS_OPTIONS, TYPE_ICONS } from '../utils/constants';
+import { deleteDevice, fetchDevices } from '../services/api';
+import { EQUIPMENT_TYPES, SECTORS, STATUS_COLORS, STATUS_OPTIONS, TYPE_ICONS } from '../utils/constants';
 import DeviceForm from '../components/DeviceForm';
+import { normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
 
-const cardStyle = { background: 'linear-gradient(180deg, rgba(24,24,24,.96), rgba(12,12,12,.96))', borderRadius: 22, border: '1px solid var(--panel-border)', boxShadow: '0 24px 55px rgba(0,0,0,.28)' };
-const inputStyle = { padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(255,255,255,.08)', fontSize: 14, fontFamily: 'inherit', background: '#111', color: 'var(--text-primary)' };
-const buttonBase = { border: 'none', borderRadius: 12, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', padding: '10px 16px' };
-const SORT_OPTIONS = [{ value: 'recent', label: 'Mais recentes' }, { value: 'name', label: 'Nome A-Z' }, { value: 'sector', label: 'Setor A-Z' }, { value: 'status', label: 'Status A-Z' }];
-
-const normalizeSectorName = (sector) => (!sector ? 'Nao informado' : SECTOR_ALIASES[sector] || sector);
-const sortDevices = (items, sortBy) => {
-  const sorted = [...items];
-  if (sortBy === 'name') return sorted.sort((a, b) => (a.nome_dispositivo || '').localeCompare(b.nome_dispositivo || ''));
-  if (sortBy === 'sector') return sorted.sort((a, b) => (a.setor || '').localeCompare(b.setor || ''));
-  if (sortBy === 'status') return sorted.sort((a, b) => (a.status || '').localeCompare(b.status || ''));
-  return sorted.sort((a, b) => (b.data_cadastro || '').localeCompare(a.data_cadastro || ''));
+const cardStyle = {
+  background: 'linear-gradient(180deg, rgba(24,24,24,.96), rgba(12,12,12,.96))',
+  borderRadius: 22,
+  border: '1px solid var(--panel-border)',
+  boxShadow: '0 24px 55px rgba(0,0,0,.28)',
 };
+const inputStyle = {
+  padding: '12px 14px',
+  borderRadius: 14,
+  border: '1px solid rgba(255,255,255,.08)',
+  fontSize: 14,
+  fontFamily: 'inherit',
+  background: '#111',
+  color: 'var(--text-primary)',
+};
+const buttonBase = {
+  border: 'none',
+  borderRadius: 12,
+  cursor: 'pointer',
+  fontSize: 13,
+  fontWeight: 700,
+  fontFamily: 'inherit',
+  padding: '10px 16px',
+};
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Mais recentes' },
+  { value: 'name', label: 'Nome A-Z' },
+  { value: 'sector', label: 'Setor A-Z' },
+  { value: 'status', label: 'Status A-Z' },
+];
 
 const downloadCsv = (rows) => {
-  const headers = ['Tipo de Equipamento', 'Categoria', 'Marca', 'Modelo', 'Numero de Serie', 'Setor', 'Status', 'Ticket', 'Pessoa Atribuida', 'Data Cadastro'];
-  const csvLines = [headers.join(';'), ...rows.map((d) => [d.nome_dispositivo, d.tipo, d.marca, d.modelo, d.numero_serie, d.setor, d.status, d.ticket, d.pessoa_atribuida, d.data_cadastro].map((v) => `"${String(v || '').replace(/"/g, '""')}"`).join(';'))];
+  const headers = [
+    'Tipo de Equipamento',
+    'Categoria',
+    'Marca',
+    'Modelo',
+    'Numero de Serie',
+    'Setor',
+    'Status',
+    'Ticket',
+    'Pessoa Atribuida',
+    'Data Cadastro',
+  ];
+  const csvLines = [
+    headers.join(';'),
+    ...rows.map((d) =>
+      [
+        d.nome_dispositivo,
+        d.tipo,
+        d.marca,
+        d.modelo,
+        d.numero_serie,
+        d.setor,
+        d.status,
+        d.ticket,
+        d.pessoa_atribuida,
+        d.data_cadastro,
+      ]
+        .map((v) => `"${String(v || '').replace(/"/g, '""')}"`)
+        .join(';')
+    ),
+  ];
   const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -42,7 +89,7 @@ const StatusBadge = ({ status }) => {
   return <span style={{ padding: '5px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, whiteSpace: 'nowrap' }}>{status}</span>;
 };
 
-const SectorChip = ({ active, label, count, onClick }) => (
+const FilterChip = ({ active, label, count, onClick }) => (
   <button onClick={onClick} style={{ ...buttonBase, padding: '9px 14px', background: active ? 'linear-gradient(135deg,#f97316,#fb923c)' : '#161616', color: active ? '#111' : '#f8fafc', border: active ? 'none' : '1px solid rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', gap: 8 }}>
     <span>{label}</span>
     <span style={{ minWidth: 22, height: 22, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(17,17,17,.14)' : 'rgba(249,115,22,.16)', color: active ? '#111' : '#fdba74', fontSize: 11 }}>{count}</span>
@@ -53,7 +100,6 @@ const Devices = () => {
   const [devices, setDevices] = useState([]);
   const [allDevices, setAllDevices] = useState([]);
   const [baseDevices, setBaseDevices] = useState([]);
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
@@ -68,6 +114,9 @@ const Devices = () => {
   const [editingDevice, setEditingDevice] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedSectorPreview, setSelectedSectorPreview] = useState('all');
+  const [equipmentQuickSearch, setEquipmentQuickSearch] = useState('');
+  const [selectedQuickDeviceId, setSelectedQuickDeviceId] = useState('');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -80,14 +129,12 @@ const Devices = () => {
       setLoading(true);
       setError('');
       const filters = { search: search || undefined, type: filterType !== 'all' ? filterType : undefined, status: filterStatus !== 'all' ? filterStatus : undefined, setor: filterSector !== 'all' ? filterSector : undefined };
-      const [devicesResult, dashboardResult, allDevicesResult] = await Promise.all([
+      const [devicesResult, allDevicesResult] = await Promise.all([
         fetchDevices({ ...filters, page: currentPage, limit: 15 }),
-        fetchDashboardStats(),
         fetchDevices({ page: 1, limit: 1000 }),
       ]);
       setDevices(sortDevices(devicesResult.data || [], sortBy));
       setPagination(devicesResult.pagination || { total: 0, page: 1, totalPages: 1 });
-      setStats(dashboardResult.data);
       setBaseDevices(allDevicesResult.data || []);
     } catch (err) {
       setError(err.message || 'Erro ao carregar equipamentos');
@@ -103,8 +150,7 @@ const Devices = () => {
 
   useEffect(() => {
     const filtered = baseDevices.filter((item) => {
-      const matchesSearch = !search || [item.nome_dispositivo, item.setor, item.numero_serie, item.marca, item.modelo, item.pessoa_atribuida]
-        .some((value) => String(value || '').toLowerCase().includes(search.toLowerCase()));
+      const matchesSearch = !search || [item.nome_dispositivo, item.setor, item.numero_serie, item.marca, item.modelo, item.pessoa_atribuida].some((value) => String(value || '').toLowerCase().includes(search.toLowerCase()));
       const matchesType = filterType === 'all' || item.tipo === filterType;
       const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
       return matchesSearch && matchesType && matchesStatus;
@@ -113,38 +159,75 @@ const Devices = () => {
   }, [baseDevices, search, filterType, filterStatus, sortBy]);
 
   const sectorTotals = useMemo(() => {
-    const totals = allDevices.reduce((acc, d) => {
-      const sector = normalizeSectorName(d.setor);
+    const totals = allDevices.reduce((acc, device) => {
+      const sector = normalizeSectorName(device.setor);
       acc[sector] = (acc[sector] || 0) + 1;
       return acc;
     }, {});
+
     return [{ name: 'all', label: 'Todos', value: allDevices.length }].concat(
-      [...SECTORS, 'Nao informado'].filter((v, i, a) => a.indexOf(v) === i).map((name) => ({ name, label: name, value: totals[name] || 0 })).filter((item) => item.value > 0)
+      [...SECTORS, 'Nao informado']
+        .filter((value, index, list) => list.indexOf(value) === index)
+        .map((name) => ({ name, label: name, value: totals[name] || 0 }))
+        .filter((item) => item.value > 0)
     );
   }, [allDevices]);
 
-  const derivedStats = useMemo(() => {
-    const isMaintenance = (status) => status === 'Em manutenção' || status === 'Em manutenÃ§Ã£o';
-    return {
-      active: allDevices.filter((item) => item.status === 'Ativo').length,
-      maintenance: allDevices.filter((item) => isMaintenance(item.status)).length,
-      inactive: allDevices.filter((item) => item.status === 'Inativo').length,
-      ticketed: allDevices.filter((item) => item.ticket?.trim()).length,
-      assigned: allDevices.filter((item) => item.tipo === 'Laptop' && item.pessoa_atribuida?.trim()).length,
-    };
-  }, [allDevices]);
+  const derivedStats = useMemo(() => ({
+    active: allDevices.filter((item) => item.status === 'Ativo').length,
+    inactive: allDevices.filter((item) => item.status === 'Inativo').length,
+    assigned: allDevices.filter((item) => item.tipo === 'Laptop' && String(item.pessoa_atribuida || '').trim()).length,
+    sectorsVisible: new Set(allDevices.map((item) => normalizeSectorName(item.setor))).size,
+  }), [allDevices]);
 
   const topSector = useMemo(() => sectorTotals.filter((item) => item.name !== 'all').sort((a, b) => b.value - a.value)[0], [sectorTotals]);
-  const recentMaintenance = useMemo(() => allDevices.filter((item) => item.ticket?.trim() || item.status === 'Em manutenção' || item.status === 'Em manutenÃ§Ã£o').slice(0, 5), [allDevices]);
 
-  const handleFormClose = () => { setShowForm(false); setEditingDevice(null); };
-  const handleFormSuccess = () => { handleFormClose(); loadInventoryData(); };
+  const sectorPreviewDevices = useMemo(() => {
+    const scoped = selectedSectorPreview === 'all' ? allDevices : allDevices.filter((device) => normalizeSectorName(device.setor) === selectedSectorPreview);
+    return sortDevices(scoped, 'name').slice(0, 8);
+  }, [allDevices, selectedSectorPreview]);
+
+  const quickDeviceMatches = useMemo(() => {
+    const term = equipmentQuickSearch.toLowerCase().trim();
+    const scoped = term
+      ? allDevices.filter((device) => [device.nome_dispositivo, device.numero_serie, device.marca, device.modelo].some((value) => String(value || '').toLowerCase().includes(term)))
+      : allDevices;
+    return sortDevices(scoped, 'name').slice(0, 12);
+  }, [allDevices, equipmentQuickSearch]);
+
+  const selectedQuickDevice = useMemo(() => allDevices.find((device) => device.id === selectedQuickDeviceId) || quickDeviceMatches[0] || null, [allDevices, quickDeviceMatches, selectedQuickDeviceId]);
+
+  useEffect(() => {
+    if (quickDeviceMatches.length > 0 && !quickDeviceMatches.some((device) => device.id === selectedQuickDeviceId)) {
+      setSelectedQuickDeviceId(quickDeviceMatches[0].id);
+    }
+    if (quickDeviceMatches.length === 0) {
+      setSelectedQuickDeviceId('');
+    }
+  }, [quickDeviceMatches, selectedQuickDeviceId]);
+
+  const handleFormClose = () => {
+    setShowForm(false);
+    setEditingDevice(null);
+  };
+
+  const handleFormSuccess = () => {
+    handleFormClose();
+    loadInventoryData();
+  };
+
   const handleDeleteConfirm = async () => {
     if (!deletingId) return;
     setDeleteLoading(true);
-    try { await deleteDevice(deletingId); setDeletingId(null); loadInventoryData(); }
-    catch (err) { setError(err.message || 'Erro ao excluir equipamento'); }
-    finally { setDeleteLoading(false); }
+    try {
+      await deleteDevice(deletingId);
+      setDeletingId(null);
+      loadInventoryData();
+    } catch (err) {
+      setError(err.message || 'Erro ao excluir equipamento');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -154,7 +237,7 @@ const Devices = () => {
           <div style={{ maxWidth: 720 }}>
             <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.06 }}>Controle operacional de equipamentos</h1>
-            <p style={{ margin: 0, color: '#fed7aa', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Consulta, filtros, acompanhamento de manutencao e acoes da base em um unico painel.</p>
+            <p style={{ margin: 0, color: '#fed7aa', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Consulta, filtros e localizacao rapida da base para facilitar a operacao do dia a dia.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <button onClick={() => downloadCsv(allDevices)} style={{ ...buttonBase, background: '#fff', color: '#111' }}>Exportar CSV</button>
@@ -166,31 +249,75 @@ const Devices = () => {
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         <KpiCard label="Base filtrada" value={pagination.total} helper="volume atual da consulta" />
         <KpiCard label="Ativos" value={derivedStats.active} helper="itens prontos para operacao" />
-        <KpiCard label="Em manutencao" value={derivedStats.maintenance} helper="equipamentos que pedem atencao" />
+        <KpiCard label="Inativos" value={derivedStats.inactive} helper="equipamentos fora de operacao" />
         <KpiCard label="Laptops atribuidos" value={derivedStats.assigned} helper="rastreabilidade por responsavel" />
       </section>
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(320px, .75fr)', gap: 20 }}>
+      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 20 }}>
         <div style={{ ...cardStyle, padding: 22 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
             <div>
               <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Localizacao rapida por setor</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Um clique para focar apenas o setor desejado e reduzir o tempo de procura.</p>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Ao clicar em um setor, veja rapidamente quais equipamentos estao alocados nele.</p>
             </div>
             {topSector && <div style={{ padding: '10px 14px', borderRadius: 14, background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.18)' }}><div style={{ fontSize: 11, fontWeight: 700, color: '#fdba74', textTransform: 'uppercase' }}>Maior concentracao</div><div style={{ marginTop: 4, fontSize: 15, fontWeight: 800, color: '#fff' }}>{topSector.label}</div><div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>{topSector.value} equipamento(s)</div></div>}
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {sectorTotals.map((sector) => <SectorChip key={sector.name} active={filterSector === sector.name} label={sector.label} count={sector.value} onClick={() => { setFilterSector(sector.name); setCurrentPage(1); }} />)}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+            {sectorTotals.map((sector) => <FilterChip key={sector.name} active={selectedSectorPreview === sector.name} label={sector.label} count={sector.value} onClick={() => { setSelectedSectorPreview(sector.name); setFilterSector(sector.name); setCurrentPage(1); }} />)}
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {sectorPreviewDevices.length > 0 ? sectorPreviewDevices.map((device) => (
+              <div key={device.id} style={{ padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)', background: '#111' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{device.nome_dispositivo}</div>
+                    <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>{device.tipo} • {device.numero_serie || 'Sem serie'}</div>
+                  </div>
+                  <StatusBadge status={device.status} />
+                </div>
+              </div>
+            )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum equipamento encontrado para o setor selecionado.</div>}
           </div>
         </div>
+
         <div style={{ ...cardStyle, padding: 22 }}>
-          <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Monitor operacional</h2>
-          <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Leitura mais direta do que precisa de acao.</p>
-          <div style={{ display: 'grid', gap: 12 }}>
-            <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(249,115,22,.16)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Com ticket</div><div style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: '#fff' }}>{derivedStats.ticketed}</div><div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>chamados que podem exigir retorno ao time</div></div>
-            <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#d1d5db', fontWeight: 700, textTransform: 'uppercase' }}>Inativos</div><div style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: '#fff' }}>{derivedStats.inactive}</div><div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>itens fora de operacao na base filtrada</div></div>
-            <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#d1d5db', fontWeight: 700, textTransform: 'uppercase' }}>Cobertura da base</div><div style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: '#fff' }}>{stats?.percentual_ativos ?? 0}%</div><div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>percentual geral de equipamentos ativos</div></div>
+          <div style={{ marginBottom: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Localizacao rapida por equipamento</h2>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Busque um equipamento e visualize rapidamente seus principais dados operacionais.</p>
           </div>
+          <input value={equipmentQuickSearch} onChange={(event) => setEquipmentQuickSearch(event.target.value)} placeholder="Buscar por nome, serie, marca ou modelo" style={{ ...inputStyle, width: '100%', marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+            {quickDeviceMatches.map((device) => <FilterChip key={device.id} active={selectedQuickDevice?.id === device.id} label={device.nome_dispositivo} count={normalizeSectorName(device.setor).length > 10 ? '...' : normalizeSectorName(device.setor)} onClick={() => setSelectedQuickDeviceId(device.id)} />)}
+          </div>
+          {selectedQuickDevice ? (
+            <div style={{ padding: 18, borderRadius: 16, background: '#111', border: '1px solid rgba(249,115,22,.16)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>{selectedQuickDevice.nome_dispositivo}</div>
+                  <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-muted)' }}>{selectedQuickDevice.tipo} • {selectedQuickDevice.marca} {selectedQuickDevice.modelo}</div>
+                </div>
+                <StatusBadge status={selectedQuickDevice.status} />
+              </div>
+              <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: '#fdba74', textTransform: 'uppercase' }}>Setor</div>
+                  <div style={{ marginTop: 4, fontSize: 14, color: '#fff' }}>{normalizeSectorName(selectedQuickDevice.setor)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#fdba74', textTransform: 'uppercase' }}>Serie</div>
+                  <div style={{ marginTop: 4, fontSize: 14, color: '#fff' }}>{selectedQuickDevice.numero_serie || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#fdba74', textTransform: 'uppercase' }}>Responsavel</div>
+                  <div style={{ marginTop: 4, fontSize: 14, color: '#fff' }}>{selectedQuickDevice.pessoa_atribuida || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#fdba74', textTransform: 'uppercase' }}>Ticket</div>
+                  <div style={{ marginTop: 4, fontSize: 14, color: '#fff' }}>{selectedQuickDevice.ticket || 'Sem ticket'}</div>
+                </div>
+              </div>
+            </div>
+          ) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum equipamento encontrado com esse filtro.</div>}
         </div>
       </section>
 
@@ -198,14 +325,14 @@ const Devices = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Central de equipamentos</h2>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Pesquisa mais completa, filtro por setor e tabela pronta para operacao do dia a dia.</p>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Pesquisa mais completa, filtros e tabela pronta para a operacao do dia a dia.</p>
           </div>
           <div style={{ fontSize: 13, color: '#fdba74', fontWeight: 700 }}>{pagination.total} registro(s) encontrado(s)</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
           <input value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Buscar por nome, serie, setor, marca ou responsavel" style={inputStyle} />
-          <select value={filterSector} onChange={(e) => { setFilterSector(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os setores</option>{SECTORS.map((sector) => <option key={sector} value={sector}>{sector}</option>)}</select>
+          <select value={filterSector} onChange={(e) => { setFilterSector(e.target.value); setSelectedSectorPreview(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os setores</option>{SECTORS.map((sector) => <option key={sector} value={sector}>{sector}</option>)}</select>
           <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os tipos</option>{EQUIPMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</select>
           <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os status</option>{STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}</select>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={inputStyle}>{SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
@@ -214,7 +341,7 @@ const Devices = () => {
         {(search || filterType !== 'all' || filterStatus !== 'all' || filterSector !== 'all') && (
           <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center', padding: 14, borderRadius: 16, background: '#111', border: '1px solid rgba(249,115,22,.12)' }}>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Filtros ativos para refinar a base e localizar mais rapido.</div>
-            <button onClick={() => { setSearch(''); setFilterType('all'); setFilterStatus('all'); setFilterSector('all'); setSortBy('recent'); setCurrentPage(1); }} style={{ ...buttonBase, background: '#1c1c1c', color: '#fff', border: '1px solid rgba(255,255,255,.08)' }}>Limpar filtros</button>
+            <button onClick={() => { setSearch(''); setFilterType('all'); setFilterStatus('all'); setFilterSector('all'); setSelectedSectorPreview('all'); setSortBy('recent'); setCurrentPage(1); }} style={{ ...buttonBase, background: '#1c1c1c', color: '#fff', border: '1px solid rgba(255,255,255,.08)' }}>Limpar filtros</button>
           </div>
         )}
 
@@ -259,27 +386,14 @@ const Devices = () => {
         )}
       </section>
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(320px, .9fr)', gap: 20 }}>
-        <div style={{ ...cardStyle, padding: 22 }}>
-          <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Resumo da base filtrada</h2>
-          <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Leitura mais clara para o gestor identificar disponibilidade e risco.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-            <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Setor selecionado</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{filterSector === 'all' ? 'Todos os setores' : filterSector}</div></div>
-            <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Tipos visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{new Set(allDevices.map((item) => item.tipo).filter(Boolean)).size}</div></div>
-            <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Sem ticket</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{Math.max(allDevices.length - derivedStats.ticketed, 0)}</div></div>
-          </div>
-        </div>
-        <div style={{ ...cardStyle, padding: 22 }}>
-          <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Fila de acompanhamento</h2>
-          <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Itens que merecem olhar mais proximo por manutencao ou ticket.</p>
-          <div style={{ display: 'grid', gap: 10 }}>
-            {recentMaintenance.length > 0 ? recentMaintenance.map((device) => (
-              <div key={device.id} style={{ padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)', background: '#111' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><div><div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{device.nome_dispositivo}</div><div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>{device.setor || 'Sem setor'} • {device.numero_serie || 'Sem serie'}</div></div><StatusBadge status={device.status} /></div>
-                <div style={{ marginTop: 8, fontSize: 12, color: '#fdba74' }}>{device.ticket ? `Ticket ${device.ticket}` : 'Acompanhar status de manutencao'}</div>
-              </div>
-            )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum item em destaque no momento.</div>}
-          </div>
+      <section style={{ ...cardStyle, padding: 22 }}>
+        <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Resumo da consulta</h2>
+        <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Indicadores diretos da base atualmente filtrada.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+          <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Setor selecionado</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{filterSector === 'all' ? 'Todos os setores' : filterSector}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Tipos visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{new Set(allDevices.map((item) => item.tipo).filter(Boolean)).size}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Setores visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{derivedStats.sectorsVisible}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: '#111', border: '1px solid rgba(255,255,255,.06)' }}><div style={{ fontSize: 12, color: '#fdba74', fontWeight: 700, textTransform: 'uppercase' }}>Itens nesta pagina</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: '#fff' }}>{devices.length}</div></div>
         </div>
       </section>
 

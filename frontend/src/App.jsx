@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard from './pages/Dashboard';
 import Devices from './pages/Devices';
+import Maintenance from './pages/Maintenance';
 
 const DashboardIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -24,9 +25,18 @@ const DevicesIcon = ({ active }) => (
   </svg>
 );
 
+const MaintenanceIcon = ({ active }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M6.2 3.4a2 2 0 0 0 2.82 2.83l3.03 3.02a1.6 1.6 0 0 1 0 2.26l-.5.5a1.6 1.6 0 0 1-2.26 0L6.27 9.02A2 2 0 0 0 3.44 6.2L5.2 4.44 6.2 3.4Z" fill={active ? '#fff7ed' : '#fb923c'} />
+    <path d="M4.2 10.8l1 1" stroke={active ? '#fdba74' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M9.8 3.2l3 3" stroke={active ? '#fdba74' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+);
+
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
   { id: 'devices', label: 'Equipamentos', icon: DevicesIcon },
+  { id: 'maintenance', label: 'Manutencao', icon: MaintenanceIcon },
 ];
 
 function App() {
@@ -56,6 +66,8 @@ function App() {
         return <Dashboard />;
       case 'devices':
         return <Devices />;
+      case 'maintenance':
+        return <Maintenance />;
       default:
         return <Dashboard />;
     }
