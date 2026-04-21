@@ -17,7 +17,7 @@ const createCorsMiddleware = () =>
       return callback(new Error(`Origem nao permitida: ${origin}`));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
   });
 
 const createApp = () => {
