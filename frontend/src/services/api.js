@@ -6,7 +6,7 @@
 import axios from 'axios';
 
 const DEFAULT_LOCAL_API_URL = 'http://localhost:3001/api';
-const DEFAULT_PRODUCTION_API_URL = 'https://inventory-backend.onrender.com/api';
+const DEFAULT_PRODUCTION_API_URL = 'https://seu-backend.onrender.com/api';
 
 const normalizeApiUrl = (value = '') => value.replace(/\/+$/, '');
 
