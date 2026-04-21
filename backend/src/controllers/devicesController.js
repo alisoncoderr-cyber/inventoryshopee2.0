@@ -31,6 +31,8 @@ const sanitizeDevicePayload = (payload = {}) => ({
   observacoes: payload.observacoes?.trim() || '',
 });
 
+const normalizeSerialKey = (value = '') => String(value).trim().toLowerCase();
+
 const getMissingFields = (data) =>
   Object.entries(data)
     .filter(([_, value]) => !value)
@@ -238,6 +240,12 @@ const createDevicesBulk = async (req, res) => {
 
     const preparedDevices = [];
     const seenSerials = new Set();
+    const existingDevices = await sheetsService.getAllDevices();
+    const existingSerials = new Set(
+      existingDevices
+        .map((device) => normalizeSerialKey(device.numero_serie))
+        .filter(Boolean)
+    );
 
     for (const rawDevice of devices) {
       const sanitized = sanitizeDevicePayload(rawDevice);
@@ -278,7 +286,7 @@ const createDevicesBulk = async (req, res) => {
         });
       }
 
-      const serialKey = numero_serie.toLowerCase();
+      const serialKey = normalizeSerialKey(numero_serie);
       if (seenSerials.has(serialKey)) {
         return res.status(400).json({
           success: false,
@@ -286,8 +294,7 @@ const createDevicesBulk = async (req, res) => {
         });
       }
 
-      const existingSerial = await sheetsService.findDeviceBySerial(numero_serie);
-      if (existingSerial) {
+      if (existingSerials.has(serialKey)) {
         return res.status(409).json({
           success: false,
           message: `O numero de serie ${numero_serie} ja esta cadastrado`,

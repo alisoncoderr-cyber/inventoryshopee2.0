@@ -67,7 +67,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 45000,
 });
 
 api.interceptors.response.use(
@@ -110,7 +110,11 @@ export const createDevice = async (deviceData) => {
 };
 
 export const createDevicesBulk = async (devicesData = []) => {
-  const response = await api.post('/devices/bulk', { devices: devicesData });
+  const response = await api.post(
+    '/devices/bulk',
+    { devices: devicesData },
+    { timeout: 120000 }
+  );
   return response.data;
 };
 
