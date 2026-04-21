@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchDevices } from '../services/api';
+import { getInventoryDevices } from '../services/inventoryCache';
 import { STATUS_COLORS } from '../utils/constants';
 import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
 
@@ -48,8 +48,8 @@ const Maintenance = () => {
       try {
         setLoading(true);
         setError('');
-        const result = await fetchDevices({ page: 1, limit: 1000 });
-        setDevices(result.data || []);
+        const inventoryDevices = await getInventoryDevices();
+        setDevices(inventoryDevices);
       } catch (err) {
         setError(err.message || 'Erro ao carregar manutencao');
       } finally {

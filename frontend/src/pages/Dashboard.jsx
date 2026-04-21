@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { fetchDashboardStats } from '../services/api';
+import { buildInventoryStats, getInventoryDevices } from '../services/inventoryCache';
 
 const CHART_COLORS = ['#f58220', '#ff9a3d', '#ffd08a', '#d97706', '#f59e0b', '#fb7185', '#facc15'];
 const cardStyle = { background: 'linear-gradient(180deg, rgba(24,24,24,.96), rgba(12,12,12,.96))', borderRadius: 22, border: '1px solid var(--panel-border)', boxShadow: '0 24px 55px rgba(0,0,0,.28)' };
@@ -39,8 +39,8 @@ const Dashboard = () => {
       try {
         setLoading(true);
         setError('');
-        const result = await fetchDashboardStats();
-        setStats(result.data);
+        const devices = await getInventoryDevices();
+        setStats(buildInventoryStats(devices));
       } catch (err) {
         setError(err.message || 'Erro ao carregar dashboard');
       } finally {

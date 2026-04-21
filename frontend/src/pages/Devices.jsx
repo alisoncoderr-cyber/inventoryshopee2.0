@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { deleteDevice, fetchDevices } from '../services/api';
+import { deleteDevice } from '../services/api';
+import { getInventoryDevices, invalidateInventoryCache } from '../services/inventoryCache';
 import { EQUIPMENT_TYPES, SECTORS, STATUS_COLORS, STATUS_OPTIONS, TYPE_ICONS } from '../utils/constants';
 import DeviceForm from '../components/DeviceForm';
 import { normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
@@ -117,6 +118,7 @@ const Devices = () => {
   const [selectedSectorPreview, setSelectedSectorPreview] = useState('all');
   const [equipmentQuickSearch, setEquipmentQuickSearch] = useState('');
   const [selectedQuickDeviceId, setSelectedQuickDeviceId] = useState('');
+  const pageSize = 15;
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -124,28 +126,21 @@ const Devices = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const loadInventoryData = useCallback(async () => {
+  const loadInventoryData = useCallback(async (options = {}) => {
     try {
       setLoading(true);
       setError('');
-      const filters = { search: search || undefined, type: filterType !== 'all' ? filterType : undefined, status: filterStatus !== 'all' ? filterStatus : undefined, setor: filterSector !== 'all' ? filterSector : undefined };
-      const [devicesResult, allDevicesResult] = await Promise.all([
-        fetchDevices({ ...filters, page: currentPage, limit: 15 }),
-        fetchDevices({ page: 1, limit: 1000 }),
-      ]);
-      setDevices(sortDevices(devicesResult.data || [], sortBy));
-      setPagination(devicesResult.pagination || { total: 0, page: 1, totalPages: 1 });
-      setBaseDevices(allDevicesResult.data || []);
+      const inventoryDevices = await getInventoryDevices(options);
+      setBaseDevices(inventoryDevices);
     } catch (err) {
       setError(err.message || 'Erro ao carregar equipamentos');
     } finally {
       setLoading(false);
     }
-  }, [search, filterType, filterStatus, filterSector, currentPage, sortBy]);
+  }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(loadInventoryData, 250);
-    return () => clearTimeout(timeout);
+    loadInventoryData();
   }, [loadInventoryData]);
 
   useEffect(() => {
@@ -153,10 +148,22 @@ const Devices = () => {
       const matchesSearch = !search || [item.nome_dispositivo, item.setor, item.numero_serie, item.marca, item.modelo, item.pessoa_atribuida].some((value) => String(value || '').toLowerCase().includes(search.toLowerCase()));
       const matchesType = filterType === 'all' || item.tipo === filterType;
       const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-      return matchesSearch && matchesType && matchesStatus;
+      const matchesSector = filterSector === 'all' || normalizeSectorName(item.setor) === filterSector;
+      return matchesSearch && matchesType && matchesStatus && matchesSector;
     });
-    setAllDevices(sortDevices(filtered, sortBy));
-  }, [baseDevices, search, filterType, filterStatus, sortBy]);
+    const sortedDevices = sortDevices(filtered, sortBy);
+    const total = sortedDevices.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const startIndex = (safePage - 1) * pageSize;
+
+    setAllDevices(sortedDevices);
+    setDevices(sortedDevices.slice(startIndex, startIndex + pageSize));
+    setPagination({ total, page: safePage, totalPages });
+    if (safePage !== currentPage) {
+      setCurrentPage(safePage);
+    }
+  }, [baseDevices, search, filterType, filterStatus, filterSector, sortBy, currentPage]);
 
   const sectorTotals = useMemo(() => {
     const totals = allDevices.reduce((acc, device) => {
@@ -213,7 +220,8 @@ const Devices = () => {
 
   const handleFormSuccess = () => {
     handleFormClose();
-    loadInventoryData();
+    invalidateInventoryCache();
+    loadInventoryData({ force: true });
   };
 
   const handleDeleteConfirm = async () => {
@@ -222,7 +230,8 @@ const Devices = () => {
     try {
       await deleteDevice(deletingId);
       setDeletingId(null);
-      loadInventoryData();
+      invalidateInventoryCache();
+      loadInventoryData({ force: true });
     } catch (err) {
       setError(err.message || 'Erro ao excluir equipamento');
     } finally {

@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createDevice, createDevicesBulk, updateDevice } from '../services/api';
+import { invalidateInventoryCache } from '../services/inventoryCache';
 import { EQUIPMENT_TYPES, SECTORS, STATUS_OPTIONS } from '../utils/constants';
 
 const inputStyle = {
@@ -176,6 +177,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
         }
       }
 
+      invalidateInventoryCache();
       onSuccess();
     } catch (err) {
       setApiError(err.message || 'Erro ao salvar equipamento');
