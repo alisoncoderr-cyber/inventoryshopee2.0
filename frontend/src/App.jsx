@@ -127,12 +127,12 @@ function App() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 12,
-              fontWeight: 700,
               flexShrink: 0,
+              overflow: 'hidden',
+              boxShadow: '0 6px 16px rgba(245,130,32,0.18)',
             }}
           >
-            INV
+            <img src="/shopee-icon.webp" alt="Shopee" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           {sidebarOpen && (
             <div>
