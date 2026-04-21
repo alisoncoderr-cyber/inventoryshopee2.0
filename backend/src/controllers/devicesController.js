@@ -6,7 +6,7 @@
 const { v4: uuidv4 } = require('uuid');
 const sheetsService = require('../services/googleSheets');
 
-const VALID_STATUSES = ['Ativo', 'Em manutenção', 'Inativo'];
+const VALID_STATUSES = ['Ativo', 'Em manutencao', 'Inativo'];
 
 const handleControllerError = (res, logMessage, fallbackMessage, error) => {
   console.error(logMessage, error);
@@ -17,6 +17,24 @@ const handleControllerError = (res, logMessage, fallbackMessage, error) => {
   });
 };
 
+const normalizeStatus = (value = '') => {
+  const raw = String(value).trim();
+
+  if (!raw) return 'Ativo';
+
+  const normalized = raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+  if (normalized === 'ativo') return 'Ativo';
+  if (normalized === 'inativo') return 'Inativo';
+  if (normalized.includes('manuten')) return 'Em manutencao';
+
+  return raw;
+};
+
 const sanitizeDevicePayload = (payload = {}) => ({
   nome_dispositivo: payload.nome_dispositivo?.trim() || payload.tipo?.trim(),
   tipo: payload.tipo?.trim(),
@@ -25,7 +43,7 @@ const sanitizeDevicePayload = (payload = {}) => ({
   numero_serie: payload.numero_serie?.trim(),
   setor: payload.setor?.trim(),
   pessoa_atribuida: payload.pessoa_atribuida?.trim() || '',
-  status: payload.status?.trim() || 'Ativo',
+  status: normalizeStatus(payload.status),
   ticket: payload.ticket?.trim() || '',
   data_aquisicao: payload.data_aquisicao || '',
   observacoes: payload.observacoes?.trim() || '',
@@ -41,13 +59,16 @@ const getMissingFields = (data) =>
 const normalizeSector = (value = '') => {
   const raw = String(value).trim();
   const aliases = {
-    'Operação': 'operacao',
-    'Operacoes': 'operacao',
+    'Operacao': 'operacao',
     'Operações': 'operacao',
+    'Operacaoes': 'operacao',
     'OperaÃ§Ã£o': 'operacao',
     'OperaÃ§Ãµes': 'operacao',
+    'OperaÃƒÂ§ÃƒÂ£o': 'operacao',
+    'OperaÃƒÂ§ÃƒÂµes': 'operacao',
     'Expedição': 'expedicao',
     'ExpediÃ§Ã£o': 'expedicao',
+    'ExpediÃƒÂ§ÃƒÂ£o': 'expedicao',
     Fulfillment: 'fullfilment',
   };
 
@@ -60,10 +81,6 @@ const normalizeSector = (value = '') => {
     .toLowerCase();
 };
 
-/**
- * Lista todos os equipamentos com suporte a filtros e busca
- * Query params: search, type, status, page, limit
- */
 const getDevices = async (req, res) => {
   try {
     const { search, type, status, setor, page = 1, limit = 20 } = req.query;
@@ -88,7 +105,8 @@ const getDevices = async (req, res) => {
     }
 
     if (status && status !== 'all') {
-      devices = devices.filter((d) => d.status === status);
+      const normalizedStatus = normalizeStatus(status);
+      devices = devices.filter((d) => normalizeStatus(d.status) === normalizedStatus);
     }
 
     if (setor && setor !== 'all') {
@@ -117,9 +135,6 @@ const getDevices = async (req, res) => {
   }
 };
 
-/**
- * Busca um equipamento especifico pelo ID
- */
 const getDeviceById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -138,9 +153,6 @@ const getDeviceById = async (req, res) => {
   }
 };
 
-/**
- * Cria um novo equipamento
- */
 const createDevice = async (req, res) => {
   try {
     const sanitized = sanitizeDevicePayload(req.body);
@@ -217,9 +229,6 @@ const createDevice = async (req, res) => {
   }
 };
 
-/**
- * Cria multiplos equipamentos de uma vez
- */
 const createDevicesBulk = async (req, res) => {
   try {
     const devices = Array.isArray(req.body?.devices) ? req.body.devices : [];
@@ -336,9 +345,6 @@ const createDevicesBulk = async (req, res) => {
   }
 };
 
-/**
- * Atualiza dados de um equipamento existente
- */
 const updateDevice = async (req, res) => {
   try {
     const { id } = req.params;
@@ -391,9 +397,6 @@ const updateDevice = async (req, res) => {
   }
 };
 
-/**
- * Remove um equipamento pelo ID
- */
 const deleteDevice = async (req, res) => {
   try {
     const { id } = req.params;
@@ -415,18 +418,15 @@ const deleteDevice = async (req, res) => {
   }
 };
 
-/**
- * Retorna estatisticas para o dashboard
- */
 const getDashboardStats = async (req, res) => {
   try {
     const devices = await sheetsService.getAllDevices();
 
     const stats = {
       total: devices.length,
-      ativos: devices.filter((d) => d.status === 'Ativo').length,
-      em_manutencao: devices.filter((d) => d.status === 'Em manutenção').length,
-      inativos: devices.filter((d) => d.status === 'Inativo').length,
+      ativos: devices.filter((d) => normalizeStatus(d.status) === 'Ativo').length,
+      em_manutencao: devices.filter((d) => normalizeStatus(d.status) === 'Em manutencao').length,
+      inativos: devices.filter((d) => normalizeStatus(d.status) === 'Inativo').length,
       com_ticket: devices.filter((d) => d.ticket?.trim()).length,
       laptops_atribuidos: devices.filter(
         (d) => d.tipo === 'Laptop' && d.pessoa_atribuida?.trim()

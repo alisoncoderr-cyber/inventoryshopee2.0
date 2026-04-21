@@ -115,9 +115,9 @@ const Devices = () => {
   const [editingDevice, setEditingDevice] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [selectedSectorPreview, setSelectedSectorPreview] = useState('all');
+  const [selectedSectorPreview, setSelectedSectorPreview] = useState('');
   const [equipmentQuickSearch, setEquipmentQuickSearch] = useState('');
-  const [selectedQuickDeviceId, setSelectedQuickDeviceId] = useState('');
+  const [selectedQuickType, setSelectedQuickType] = useState('');
   const pageSize = 15;
 
   useEffect(() => {
@@ -172,12 +172,10 @@ const Devices = () => {
       return acc;
     }, {});
 
-    return [{ name: 'all', label: 'Todos', value: allDevices.length }].concat(
-      [...SECTORS, 'Nao informado']
-        .filter((value, index, list) => list.indexOf(value) === index)
-        .map((name) => ({ name, label: name, value: totals[name] || 0 }))
-        .filter((item) => item.value > 0)
-    );
+    return [...SECTORS, 'Nao informado']
+      .filter((value, index, list) => list.indexOf(value) === index)
+      .map((name) => ({ name, label: name, value: totals[name] || 0 }))
+      .filter((item) => item.value > 0);
   }, [allDevices]);
 
   const derivedStats = useMemo(() => ({
@@ -187,31 +185,51 @@ const Devices = () => {
     sectorsVisible: new Set(allDevices.map((item) => normalizeSectorName(item.setor))).size,
   }), [allDevices]);
 
-  const topSector = useMemo(() => sectorTotals.filter((item) => item.name !== 'all').sort((a, b) => b.value - a.value)[0], [sectorTotals]);
+  const topSector = useMemo(() => [...sectorTotals].sort((a, b) => b.value - a.value)[0], [sectorTotals]);
 
   const sectorPreviewDevices = useMemo(() => {
-    const scoped = selectedSectorPreview === 'all' ? allDevices : allDevices.filter((device) => normalizeSectorName(device.setor) === selectedSectorPreview);
+    if (!selectedSectorPreview) return [];
+    const scoped = allDevices.filter((device) => normalizeSectorName(device.setor) === selectedSectorPreview);
     return sortDevices(scoped, 'name').slice(0, 8);
   }, [allDevices, selectedSectorPreview]);
 
-  const quickDeviceMatches = useMemo(() => {
+  const quickDeviceGroups = useMemo(() => {
     const term = equipmentQuickSearch.toLowerCase().trim();
     const scoped = term
       ? allDevices.filter((device) => [device.nome_dispositivo, device.numero_serie, device.marca, device.modelo].some((value) => String(value || '').toLowerCase().includes(term)))
       : allDevices;
-    return sortDevices(scoped, 'name').slice(0, 12);
+
+    const grouped = scoped.reduce((acc, device) => {
+      const type = device.nome_dispositivo || device.tipo || 'Nao informado';
+
+      if (!acc[type]) {
+        acc[type] = { type, count: 0, devices: [] };
+      }
+
+      acc[type].count += 1;
+      acc[type].devices.push(device);
+      return acc;
+    }, {});
+
+    return Object.values(grouped)
+      .map((group) => ({
+        ...group,
+        devices: sortDevices(group.devices, 'name'),
+      }))
+      .sort((a, b) => a.type.localeCompare(b.type));
   }, [allDevices, equipmentQuickSearch]);
 
-  const selectedQuickDevice = useMemo(() => allDevices.find((device) => device.id === selectedQuickDeviceId) || quickDeviceMatches[0] || null, [allDevices, quickDeviceMatches, selectedQuickDeviceId]);
+  const selectedQuickGroup = useMemo(() => quickDeviceGroups.find((group) => group.type === selectedQuickType) || quickDeviceGroups[0] || null, [quickDeviceGroups, selectedQuickType]);
+  const selectedQuickDevice = useMemo(() => selectedQuickGroup?.devices?.[0] || null, [selectedQuickGroup]);
 
   useEffect(() => {
-    if (quickDeviceMatches.length > 0 && !quickDeviceMatches.some((device) => device.id === selectedQuickDeviceId)) {
-      setSelectedQuickDeviceId(quickDeviceMatches[0].id);
+    if (quickDeviceGroups.length > 0 && !quickDeviceGroups.some((group) => group.type === selectedQuickType)) {
+      setSelectedQuickType(quickDeviceGroups[0].type);
     }
-    if (quickDeviceMatches.length === 0) {
-      setSelectedQuickDeviceId('');
+    if (quickDeviceGroups.length === 0) {
+      setSelectedQuickType('');
     }
-  }, [quickDeviceMatches, selectedQuickDeviceId]);
+  }, [quickDeviceGroups, selectedQuickType]);
 
   const handleFormClose = () => {
     setShowForm(false);
@@ -267,15 +285,15 @@ const Devices = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
             <div>
               <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Localizacao rapida por setor</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Ao clicar em um setor, veja rapidamente quais equipamentos estao alocados nele.</p>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Ao clicar em um setor, abra ou feche os equipamentos alocados nele.</p>
             </div>
             {topSector && <div style={{ padding: '10px 14px', borderRadius: 14, background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.18)' }}><div style={{ fontSize: 11, fontWeight: 700, color: '#fdba74', textTransform: 'uppercase' }}>Maior concentracao</div><div style={{ marginTop: 4, fontSize: 15, fontWeight: 800, color: '#fff' }}>{topSector.label}</div><div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>{topSector.value} equipamento(s)</div></div>}
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-            {sectorTotals.map((sector) => <FilterChip key={sector.name} active={selectedSectorPreview === sector.name} label={sector.label} count={sector.value} onClick={() => { setSelectedSectorPreview(sector.name); setFilterSector(sector.name); setCurrentPage(1); }} />)}
+            {sectorTotals.map((sector) => <FilterChip key={sector.name} active={selectedSectorPreview === sector.name} label={sector.label} count={sector.value} onClick={() => { const nextSector = selectedSectorPreview === sector.name ? '' : sector.name; setSelectedSectorPreview(nextSector); setFilterSector(nextSector || 'all'); setCurrentPage(1); }} />)}
           </div>
           <div style={{ display: 'grid', gap: 10 }}>
-            {sectorPreviewDevices.length > 0 ? sectorPreviewDevices.map((device) => (
+            {!selectedSectorPreview ? <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Selecione um setor para abrir os equipamentos dele.</div> : sectorPreviewDevices.length > 0 ? sectorPreviewDevices.map((device) => (
               <div key={device.id} style={{ padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)', background: '#111' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                   <div>
@@ -292,11 +310,11 @@ const Devices = () => {
         <div style={{ ...cardStyle, padding: 22 }}>
           <div style={{ marginBottom: 16 }}>
             <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Localizacao rapida por equipamento</h2>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Busque um equipamento e visualize rapidamente seus principais dados operacionais.</p>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Busque por equipamento e veja os tipos disponiveis, sem repetir item por item.</p>
           </div>
           <input value={equipmentQuickSearch} onChange={(event) => setEquipmentQuickSearch(event.target.value)} placeholder="Buscar por nome, serie, marca ou modelo" style={{ ...inputStyle, width: '100%', marginBottom: 16 }} />
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-            {quickDeviceMatches.map((device) => <FilterChip key={device.id} active={selectedQuickDevice?.id === device.id} label={device.nome_dispositivo} count={normalizeSectorName(device.setor).length > 10 ? '...' : normalizeSectorName(device.setor)} onClick={() => setSelectedQuickDeviceId(device.id)} />)}
+            {quickDeviceGroups.map((group) => <FilterChip key={group.type} active={selectedQuickGroup?.type === group.type} label={group.type} count={group.count} onClick={() => setSelectedQuickType(group.type)} />)}
           </div>
           {selectedQuickDevice ? (
             <div style={{ padding: 18, borderRadius: 16, background: '#111', border: '1px solid rgba(249,115,22,.16)' }}>
@@ -306,6 +324,9 @@ const Devices = () => {
                   <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-muted)' }}>{selectedQuickDevice.tipo} • {selectedQuickDevice.marca} {selectedQuickDevice.modelo}</div>
                 </div>
                 <StatusBadge status={selectedQuickDevice.status} />
+              </div>
+              <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 12, background: 'rgba(249,115,22,.08)', border: '1px solid rgba(249,115,22,.12)', fontSize: 13, color: '#ffd08a' }}>
+                {selectedQuickGroup.count} equipamento(s) encontrado(s) para {selectedQuickGroup.type}
               </div>
               <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                 <div>
@@ -341,7 +362,7 @@ const Devices = () => {
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
           <input value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Buscar por nome, serie, setor, marca ou responsavel" style={inputStyle} />
-          <select value={filterSector} onChange={(e) => { setFilterSector(e.target.value); setSelectedSectorPreview(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os setores</option>{SECTORS.map((sector) => <option key={sector} value={sector}>{sector}</option>)}</select>
+          <select value={filterSector} onChange={(e) => { const nextSector = e.target.value; setFilterSector(nextSector); setSelectedSectorPreview(nextSector === 'all' ? '' : nextSector); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os setores</option>{SECTORS.map((sector) => <option key={sector} value={sector}>{sector}</option>)}</select>
           <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os tipos</option>{EQUIPMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</select>
           <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }} style={inputStyle}><option value="all">Todos os status</option>{STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}</select>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={inputStyle}>{SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
@@ -350,7 +371,7 @@ const Devices = () => {
         {(search || filterType !== 'all' || filterStatus !== 'all' || filterSector !== 'all') && (
           <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center', padding: 14, borderRadius: 16, background: '#111', border: '1px solid rgba(249,115,22,.12)' }}>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Filtros ativos para refinar a base e localizar mais rapido.</div>
-            <button onClick={() => { setSearch(''); setFilterType('all'); setFilterStatus('all'); setFilterSector('all'); setSelectedSectorPreview('all'); setSortBy('recent'); setCurrentPage(1); }} style={{ ...buttonBase, background: '#1c1c1c', color: '#fff', border: '1px solid rgba(255,255,255,.08)' }}>Limpar filtros</button>
+            <button onClick={() => { setSearch(''); setFilterType('all'); setFilterStatus('all'); setFilterSector('all'); setSelectedSectorPreview(''); setSortBy('recent'); setCurrentPage(1); }} style={{ ...buttonBase, background: '#1c1c1c', color: '#fff', border: '1px solid rgba(255,255,255,.08)' }}>Limpar filtros</button>
           </div>
         )}
 
