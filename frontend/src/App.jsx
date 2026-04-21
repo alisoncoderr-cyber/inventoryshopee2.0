@@ -136,7 +136,7 @@ function App() {
           </div>
           {sidebarOpen && (
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1 }}>Inventario Shopee</div>
+              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1 }}>Inventario SOC-PE2</div>
               <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>Centro Logistico</div>
             </div>
           )}
