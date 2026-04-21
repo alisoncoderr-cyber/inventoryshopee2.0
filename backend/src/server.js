@@ -39,7 +39,7 @@ app.get('/health', (req, res) => {
   const sheets = getServiceStatus();
   const isReady = sheets.ready;
 
-  res.status(isReady ? 200 : 503).json({
+  res.status(200).json({
     status: isReady ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
     services: {
