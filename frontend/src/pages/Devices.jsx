@@ -232,16 +232,16 @@ const Devices = () => {
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
-      <section style={{ ...cardStyle, padding: isMobile ? 22 : 30, background: 'radial-gradient(circle at top right, rgba(249,115,22,.3), transparent 24%), linear-gradient(135deg,#090909 0%,#141414 54%,#241103 100%)', color: '#fff' }}>
+      <section style={{ ...cardStyle, padding: isMobile ? 22 : 30, background: 'radial-gradient(circle at top right, rgba(238,77,45,.3), transparent 24%), linear-gradient(135deg,#090909 0%,#141414 54%,#241006 100%)', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
+            <div style={{ fontSize: 12, color: '#ffb199', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.06 }}>Controle operacional de equipamentos</h1>
-            <p style={{ margin: 0, color: '#fed7aa', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Consulta, filtros e localizacao rapida da base para facilitar a operacao do dia a dia.</p>
+            <p style={{ margin: 0, color: '#ffd9cf', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Consulta, filtros e localizacao rapida da base para facilitar a operacao do dia a dia.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <button onClick={() => downloadCsv(allDevices)} style={{ ...buttonBase, background: '#fff', color: '#111' }}>Exportar CSV</button>
-            <button onClick={() => { setEditingDevice(null); setShowForm(true); }} style={{ ...buttonBase, background: 'linear-gradient(135deg,#f97316,#fb923c)', color: '#111' }}>Novo equipamento</button>
+            <button onClick={() => { setEditingDevice(null); setShowForm(true); }} style={{ ...buttonBase, background: 'linear-gradient(135deg,#ee4d2d,#ff6a3d)', color: '#111' }}>Novo equipamento</button>
           </div>
         </div>
       </section>
