@@ -63,20 +63,20 @@ const Dashboard = () => {
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
-      <section style={{ ...cardStyle, padding: isMobile ? 24 : 32, background: 'radial-gradient(circle at top right, rgba(249,115,22,.22), transparent 25%), linear-gradient(135deg,#101010 0%,#181818 55%,#2d1607 100%)', color: '#fff', overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', right: -40, top: -40, width: 220, height: 220, borderRadius: '50%', background: 'rgba(249,115,22,.08)' }} />
+      <section style={{ ...cardStyle, padding: isMobile ? 24 : 32, background: 'radial-gradient(circle at top right, rgba(249,115,22,.28), transparent 24%), linear-gradient(135deg,#090909 0%,#131313 52%,#231003 100%)', color: '#fff', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'absolute', right: -40, top: -40, width: 220, height: 220, borderRadius: '50%', background: 'rgba(249,115,22,.14)' }} />
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 620 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#fdba74' }}>Dashboard</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.1 }}>Visao geral do inventario</h1>
             <p style={{ margin: 0, maxWidth: 560, color: '#fed7aa', fontSize: 14, lineHeight: 1.7 }}>Indicadores, distribuicao por setor e acompanhamento da operacao em tempo real.</p>
           </div>
-          <div style={{ minWidth: isMobile ? '100%' : 260, maxWidth: 300, padding: 18, borderRadius: 18, background: 'rgba(17,17,17,.62)', border: '1px solid rgba(249,115,22,.15)', backdropFilter: 'blur(10px)' }}>
+          <div style={{ minWidth: isMobile ? '100%' : 260, maxWidth: 300, padding: 18, borderRadius: 18, background: 'linear-gradient(180deg, rgba(18,18,18,.88), rgba(28,14,4,.82))', border: '1px solid rgba(249,115,22,.22)', backdropFilter: 'blur(10px)' }}>
             <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.05em' }}>Saude da operacao</div>
             <div style={{ marginTop: 10, fontSize: 34, fontWeight: 800 }}>{stats.percentual_ativos}%</div>
             <div style={{ marginTop: 4, color: '#e5e7eb', fontSize: 13 }}>dos equipamentos estao ativos</div>
             <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
-              <InsightItem label="Setor lider" value={topSector ? `${topSector.name} (${topSector.value})` : 'Sem dados'} tone={{ background: 'rgba(249,115,22,.1)', border: 'rgba(249,115,22,.14)', labelColor: '#fdba74', valueColor: '#fff' }} />
+              <InsightItem label="Setor lider" value={topSector ? `${topSector.name} (${topSector.value})` : 'Sem dados'} tone={{ background: 'rgba(249,115,22,.16)', border: 'rgba(249,115,22,.22)', labelColor: '#fdba74', valueColor: '#fff' }} />
               <InsightItem label="Tipo dominante" value={topType ? `${topType.name} (${topType.value})` : 'Sem dados'} tone={{ background: 'rgba(255,255,255,.04)', border: 'rgba(255,255,255,.08)', labelColor: '#d1d5db', valueColor: '#fff' }} />
             </div>
           </div>

@@ -66,7 +66,7 @@ function App() {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        background: 'radial-gradient(circle at top, rgba(251,146,60,0.16), transparent 24%), var(--app-bg)',
+        background: 'radial-gradient(circle at top, rgba(249,115,22,0.22), transparent 26%), var(--app-bg)',
         fontFamily: "'Segoe UI', system-ui, sans-serif",
         color: 'var(--text-primary)',
       }}
@@ -168,7 +168,7 @@ function App() {
                 padding: sidebarOpen ? '11px 16px' : '11px 0',
                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
                 color: activePage === item.id ? '#fff' : '#cbd5e1',
-                background: activePage === item.id ? 'linear-gradient(90deg, rgba(249,115,22,0.32), rgba(251,146,60,0.12))' : 'transparent',
+                background: activePage === item.id ? 'linear-gradient(90deg, rgba(249,115,22,0.38), rgba(251,146,60,0.16))' : 'transparent',
                 borderLeft: activePage === item.id ? '3px solid #f97316' : '3px solid transparent',
                 transition: 'all 0.15s',
                 fontSize: 14,

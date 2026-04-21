@@ -149,7 +149,7 @@ const Devices = () => {
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
-      <section style={{ ...cardStyle, padding: isMobile ? 22 : 30, background: 'radial-gradient(circle at top right, rgba(249,115,22,.22), transparent 26%), linear-gradient(135deg,#111 0%,#1a1a1a 56%,#2a1608 100%)', color: '#fff' }}>
+      <section style={{ ...cardStyle, padding: isMobile ? 22 : 30, background: 'radial-gradient(circle at top right, rgba(249,115,22,.3), transparent 24%), linear-gradient(135deg,#090909 0%,#141414 54%,#241103 100%)', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
             <div style={{ fontSize: 12, color: '#fdba74', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
