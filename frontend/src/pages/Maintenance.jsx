@@ -86,12 +86,12 @@ const Maintenance = () => {
       <section style={{ ...cardStyle, padding: isMobile ? 22 : 30, background: 'radial-gradient(circle at top right, rgba(249,115,22,.3), transparent 24%), linear-gradient(135deg,#090909 0%,#141414 54%,#241103 100%)', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ fontSize: 12, color: '#ffb199', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Manutencao</div>
+            <div style={{ fontSize: 12, color: '#ffd08a', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Manutencao</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.06 }}>Acompanhamento de equipamentos em manutencao</h1>
-            <p style={{ margin: 0, color: '#ffd9cf', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Painel dedicado para fila de manutencao, tickets, setores impactados e itens que exigem acompanhamento mais proximo.</p>
+            <p style={{ margin: 0, color: '#ffe2bf', lineHeight: 1.7, fontSize: 14, maxWidth: 620 }}>Painel dedicado para fila de manutencao, tickets, setores impactados e itens que exigem acompanhamento mais proximo.</p>
           </div>
-          <div style={{ minWidth: isMobile ? '100%' : 280, maxWidth: 320, padding: 18, borderRadius: 18, background: 'linear-gradient(180deg, rgba(18,18,18,.88), rgba(34,13,7,.82))', border: '1px solid rgba(238,77,45,.22)' }}>
-            <div style={{ fontSize: 12, color: '#ffb199', textTransform: 'uppercase' }}>Setor mais impactado</div>
+          <div style={{ minWidth: isMobile ? '100%' : 280, maxWidth: 320, padding: 18, borderRadius: 18, background: 'linear-gradient(180deg, rgba(18,18,18,.88), rgba(36,20,6,.82))', border: '1px solid rgba(245,130,32,.22)' }}>
+            <div style={{ fontSize: 12, color: '#ffd08a', textTransform: 'uppercase' }}>Setor mais impactado</div>
             <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800 }}>{topSector ? topSector.sector : 'Sem dados'}</div>
             <div style={{ marginTop: 4, color: '#e5e7eb', fontSize: 13 }}>{topSector ? `${topSector.count} equipamento(s) em manutencao` : 'Nenhum equipamento em manutencao'}</div>
           </div>

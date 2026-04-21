@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { fetchDashboardStats } from '../services/api';
 
-const CHART_COLORS = ['#ee4d2d', '#ff6a3d', '#ffb199', '#d93f21', '#ff8a4c', '#fb7185', '#facc15'];
+const CHART_COLORS = ['#f58220', '#ff9a3d', '#ffd08a', '#d97706', '#f59e0b', '#fb7185', '#facc15'];
 const cardStyle = { background: 'linear-gradient(180deg, rgba(24,24,24,.96), rgba(12,12,12,.96))', borderRadius: 22, border: '1px solid var(--panel-border)', boxShadow: '0 24px 55px rgba(0,0,0,.28)' };
 
 const StatCard = ({ title, value, helper, accent, icon }) => (
@@ -63,20 +63,20 @@ const Dashboard = () => {
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
-      <section style={{ ...cardStyle, padding: isMobile ? 24 : 32, background: 'radial-gradient(circle at top right, rgba(238,77,45,.3), transparent 24%), linear-gradient(135deg,#090909 0%,#131313 52%,#241006 100%)', color: '#fff', overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', right: -40, top: -40, width: 220, height: 220, borderRadius: '50%', background: 'rgba(238,77,45,.16)' }} />
+      <section style={{ ...cardStyle, padding: isMobile ? 24 : 32, background: 'radial-gradient(circle at top right, rgba(245,130,32,.28), transparent 24%), linear-gradient(135deg,#090909 0%,#131313 52%,#241305 100%)', color: '#fff', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'absolute', right: -40, top: -40, width: 220, height: 220, borderRadius: '50%', background: 'rgba(245,130,32,.14)' }} />
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 620 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#ffb199' }}>Dashboard</div>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#ffd08a' }}>Dashboard</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 36, lineHeight: 1.1 }}>Visao geral do inventario</h1>
-            <p style={{ margin: 0, maxWidth: 560, color: '#ffd9cf', fontSize: 14, lineHeight: 1.7 }}>Indicadores, distribuicao por setor e acompanhamento da operacao em tempo real.</p>
+            <p style={{ margin: 0, maxWidth: 560, color: '#ffe2bf', fontSize: 14, lineHeight: 1.7 }}>Indicadores, distribuicao por setor e acompanhamento da operacao em tempo real.</p>
           </div>
-          <div style={{ minWidth: isMobile ? '100%' : 260, maxWidth: 300, padding: 18, borderRadius: 18, background: 'linear-gradient(180deg, rgba(18,18,18,.88), rgba(34,13,7,.82))', border: '1px solid rgba(238,77,45,.22)', backdropFilter: 'blur(10px)' }}>
-            <div style={{ fontSize: 12, color: '#ffb199', textTransform: 'uppercase', letterSpacing: '.05em' }}>Saude da operacao</div>
+          <div style={{ minWidth: isMobile ? '100%' : 260, maxWidth: 300, padding: 18, borderRadius: 18, background: 'linear-gradient(180deg, rgba(18,18,18,.88), rgba(36,20,6,.82))', border: '1px solid rgba(245,130,32,.22)', backdropFilter: 'blur(10px)' }}>
+            <div style={{ fontSize: 12, color: '#ffd08a', textTransform: 'uppercase', letterSpacing: '.05em' }}>Saude da operacao</div>
             <div style={{ marginTop: 10, fontSize: 34, fontWeight: 800 }}>{stats.percentual_ativos}%</div>
             <div style={{ marginTop: 4, color: '#e5e7eb', fontSize: 13 }}>dos equipamentos estao ativos</div>
             <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
-              <InsightItem label="Setor lider" value={topSector ? `${topSector.name} (${topSector.value})` : 'Sem dados'} tone={{ background: 'rgba(238,77,45,.16)', border: 'rgba(238,77,45,.22)', labelColor: '#ffb199', valueColor: '#fff' }} />
+              <InsightItem label="Setor lider" value={topSector ? `${topSector.name} (${topSector.value})` : 'Sem dados'} tone={{ background: 'rgba(245,130,32,.16)', border: 'rgba(245,130,32,.22)', labelColor: '#ffd08a', valueColor: '#fff' }} />
               <InsightItem label="Tipo dominante" value={topType ? `${topType.name} (${topType.value})` : 'Sem dados'} tone={{ background: 'rgba(255,255,255,.04)', border: 'rgba(255,255,255,.08)', labelColor: '#d1d5db', valueColor: '#fff' }} />
             </div>
           </div>
@@ -84,10 +84,10 @@ const Dashboard = () => {
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
-        <StatCard title="Base total" value={stats.total} helper="todos os itens controlados" accent="#ee4d2d" icon="INV" />
-        <StatCard title="Equipamentos ativos" value={stats.ativos} helper="itens prontos para operacao" accent="#ff6a3d" icon="OK" />
+        <StatCard title="Base total" value={stats.total} helper="todos os itens controlados" accent="#f58220" icon="INV" />
+        <StatCard title="Equipamentos ativos" value={stats.ativos} helper="itens prontos para operacao" accent="#ff9a3d" icon="OK" />
         <StatCard title="Em manutencao" value={stats.em_manutencao} helper={`${maintenanceRate} da base exige atencao`} accent="#f59e0b" icon="MT" />
-        <StatCard title="Com ticket" value={stats.com_ticket} helper="equipamentos vinculados a chamados" accent="#ffb199" icon="TK" />
+        <StatCard title="Com ticket" value={stats.com_ticket} helper="equipamentos vinculados a chamados" accent="#ffd08a" icon="TK" />
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 20 }}>
@@ -102,8 +102,8 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,.08)" />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#d1d5db' }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#d1d5db' }} />
-                <Tooltip cursor={{ fill: 'rgba(238,77,45,.08)' }} contentStyle={{ borderRadius: 14, border: '1px solid rgba(238,77,45,.16)', background: '#111', color: '#fff' }} />
-                <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#ee4d2d" name="Equipamentos" />
+                <Tooltip cursor={{ fill: 'rgba(245,130,32,.08)' }} contentStyle={{ borderRadius: 14, border: '1px solid rgba(245,130,32,.16)', background: '#111', color: '#fff' }} />
+                <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#f58220" name="Equipamentos" />
               </BarChart>
             </ResponsiveContainer>
           ) : <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum dado por setor disponivel.</div>}
@@ -119,7 +119,7 @@ const Dashboard = () => {
                   <Pie data={tipoData} dataKey="value" nameKey="name" outerRadius={92} innerRadius={48} paddingAngle={4}>
                     {tipoData.map((_, index) => <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid rgba(238,77,45,.16)', background: '#111' }} />
+                  <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid rgba(245,130,32,.16)', background: '#111' }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: 'grid', gap: 10 }}>
@@ -143,7 +143,7 @@ const Dashboard = () => {
           <h3 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Alertas operacionais</h3>
           <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Indicadores que ajudam a priorizar manutencao e distribuicao</p>
           <div style={{ display: 'grid', gap: 12 }}>
-            <InsightItem label="Em manutencao" value={`${stats.em_manutencao} item(ns)`} tone={{ background: 'rgba(238,77,45,.1)', border: 'rgba(238,77,45,.16)', labelColor: '#ffb199', valueColor: '#fff' }} />
+            <InsightItem label="Em manutencao" value={`${stats.em_manutencao} item(ns)`} tone={{ background: 'rgba(245,130,32,.1)', border: 'rgba(245,130,32,.16)', labelColor: '#ffd08a', valueColor: '#fff' }} />
             <InsightItem label="Com ticket ativo" value={`${stats.com_ticket} item(ns)`} tone={{ background: 'rgba(255,255,255,.04)', border: 'rgba(255,255,255,.08)', labelColor: '#d1d5db', valueColor: '#fff' }} />
             <InsightItem label="Laptops com responsavel" value={`${stats.laptops_atribuidos} item(ns)`} tone={{ background: 'rgba(245,158,11,.1)', border: 'rgba(245,158,11,.16)', labelColor: '#fdba74', valueColor: '#fff' }} />
           </div>

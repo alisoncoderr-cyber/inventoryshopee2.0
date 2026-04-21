@@ -10,26 +10,26 @@ import Maintenance from './pages/Maintenance';
 
 const DashboardIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <rect x="2" y="2" width="5" height="5" rx="1.2" fill={active ? '#fff1ec' : '#ff6a3d'} />
-    <rect x="9" y="2" width="5" height="8" rx="1.2" fill={active ? '#ffb199' : '#6b7280'} />
-    <rect x="2" y="9" width="5" height="5" rx="1.2" fill={active ? '#ffb199' : '#6b7280'} />
-    <rect x="9" y="12" width="5" height="2" rx="1" fill={active ? '#fff1ec' : '#ff6a3d'} />
+    <rect x="2" y="2" width="5" height="5" rx="1.2" fill={active ? '#fff7ed' : '#ff9a3d'} />
+    <rect x="9" y="2" width="5" height="8" rx="1.2" fill={active ? '#ffd08a' : '#6b7280'} />
+    <rect x="2" y="9" width="5" height="5" rx="1.2" fill={active ? '#ffd08a' : '#6b7280'} />
+    <rect x="9" y="12" width="5" height="2" rx="1" fill={active ? '#fff7ed' : '#ff9a3d'} />
   </svg>
 );
 
 const DevicesIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <rect x="2" y="3" width="12" height="8" rx="1.5" stroke={active ? '#fff1ec' : '#ff6a3d'} strokeWidth="1.4" />
-    <path d="M5 13h6" stroke={active ? '#ffb199' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
-    <path d="M7 11v2M9 11v2" stroke={active ? '#ffb199' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
+    <rect x="2" y="3" width="12" height="8" rx="1.5" stroke={active ? '#fff7ed' : '#ff9a3d'} strokeWidth="1.4" />
+    <path d="M5 13h6" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M7 11v2M9 11v2" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 );
 
 const MaintenanceIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M6.2 3.4a2 2 0 0 0 2.82 2.83l3.03 3.02a1.6 1.6 0 0 1 0 2.26l-.5.5a1.6 1.6 0 0 1-2.26 0L6.27 9.02A2 2 0 0 0 3.44 6.2L5.2 4.44 6.2 3.4Z" fill={active ? '#fff1ec' : '#ff6a3d'} />
-    <path d="M4.2 10.8l1 1" stroke={active ? '#ffb199' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
-    <path d="M9.8 3.2l3 3" stroke={active ? '#ffb199' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M6.2 3.4a2 2 0 0 0 2.82 2.83l3.03 3.02a1.6 1.6 0 0 1 0 2.26l-.5.5a1.6 1.6 0 0 1-2.26 0L6.27 9.02A2 2 0 0 0 3.44 6.2L5.2 4.44 6.2 3.4Z" fill={active ? '#fff7ed' : '#ff9a3d'} />
+    <path d="M4.2 10.8l1 1" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M9.8 3.2l3 3" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 );
 
@@ -78,7 +78,7 @@ function App() {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        background: 'radial-gradient(circle at top, rgba(238,77,45,0.24), transparent 26%), var(--app-bg)',
+        background: 'radial-gradient(circle at top, rgba(245,130,32,0.22), transparent 26%), var(--app-bg)',
         fontFamily: "'Segoe UI', system-ui, sans-serif",
         color: 'var(--text-primary)',
       }}
@@ -123,7 +123,7 @@ function App() {
               width: 36,
               height: 36,
               borderRadius: 12,
-              background: 'linear-gradient(135deg, #ee4d2d, #ff6a3d 55%, #ffb199)',
+              background: 'linear-gradient(135deg, #f58220, #ff9a3d 55%, #ffd08a)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -180,8 +180,8 @@ function App() {
                 padding: sidebarOpen ? '11px 16px' : '11px 0',
                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
                 color: activePage === item.id ? '#fff' : '#cbd5e1',
-                background: activePage === item.id ? 'linear-gradient(90deg, rgba(238,77,45,0.4), rgba(255,106,61,0.16))' : 'transparent',
-                borderLeft: activePage === item.id ? '3px solid #ee4d2d' : '3px solid transparent',
+                background: activePage === item.id ? 'linear-gradient(90deg, rgba(245,130,32,0.36), rgba(255,154,61,0.14))' : 'transparent',
+                borderLeft: activePage === item.id ? '3px solid #f58220' : '3px solid transparent',
                 transition: 'all 0.15s',
                 fontSize: 14,
                 fontWeight: activePage === item.id ? 600 : 400,
@@ -208,7 +208,7 @@ function App() {
         <header
           style={{
             background: 'rgba(18, 18, 18, 0.9)',
-            borderBottom: '1px solid rgba(238,77,45,0.14)',
+            borderBottom: '1px solid rgba(245,130,32,0.14)',
             padding: isMobile ? '0 16px' : '0 24px',
             height: 60,
             display: 'flex',
@@ -243,7 +243,7 @@ function App() {
             <span style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc' }}>{NAV_ITEMS.find((item) => item.id === activePage)?.label}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ee4d2d', boxShadow: '0 0 0 3px rgba(238,77,45,0.22)' }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f58220', boxShadow: '0 0 0 3px rgba(245,130,32,0.22)' }} />
             {!isMobile && <span style={{ fontSize: 12, color: '#d1d5db' }}>Operacao ativa</span>}
           </div>
         </header>

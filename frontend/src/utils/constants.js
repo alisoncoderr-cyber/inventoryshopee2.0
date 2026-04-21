@@ -40,8 +40,8 @@ export const SECTORS = [
 export const STATUS_COLORS = {
   Ativo: { bg: 'rgba(34,197,94,0.15)', text: '#86efac', border: 'rgba(34,197,94,0.35)' },
   Inativo: { bg: 'rgba(239,68,68,0.15)', text: '#fca5a5', border: 'rgba(239,68,68,0.35)' },
-  'Em manutenÃƒÂ§ÃƒÂ£o': { bg: 'rgba(238,77,45,0.16)', text: '#ffb199', border: 'rgba(238,77,45,0.38)' },
-  'Em manutenÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': { bg: 'rgba(238,77,45,0.16)', text: '#ffb199', border: 'rgba(238,77,45,0.38)' },
+  'Em manutenÃƒÂ§ÃƒÂ£o': { bg: 'rgba(245,130,32,0.16)', text: '#ffd08a', border: 'rgba(245,130,32,0.38)' },
+  'Em manutenÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': { bg: 'rgba(245,130,32,0.16)', text: '#ffd08a', border: 'rgba(245,130,32,0.38)' },
 };
 
 export const STATUS_ICONS = {

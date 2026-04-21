@@ -8,13 +8,13 @@ const globalStyles = `
     --panel-bg: #141414;
     --panel-alt: #1b1b1b;
     --panel-soft: #222222;
-    --panel-border: rgba(238, 77, 45, 0.22);
+    --panel-border: rgba(245, 130, 32, 0.22);
     --text-primary: #f8fafc;
     --text-secondary: #d1d5db;
     --text-muted: #9ca3af;
-    --brand: #ee4d2d;
-    --brand-soft: #ff6a3d;
-    --brand-pale: #ffd9cf;
+    --brand: #f58220;
+    --brand-soft: #ff9a3d;
+    --brand-pale: #ffe2bf;
     --success: #22c55e;
     --warning: #f59e0b;
     --danger: #ef4444;
