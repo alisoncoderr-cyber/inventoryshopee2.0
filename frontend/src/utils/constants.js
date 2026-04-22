@@ -37,13 +37,15 @@ export const SECTORS = [
   'Fullfilment',
 ];
 
+const maintenanceTone = { bg: '#fef3c7', text: '#b45309', border: 'rgba(245, 158, 11, 0.24)' };
+
 export const STATUS_COLORS = {
-  Ativo: { bg: 'rgba(34,197,94,0.15)', text: '#86efac', border: 'rgba(34,197,94,0.35)' },
-  Inativo: { bg: 'rgba(239,68,68,0.15)', text: '#fca5a5', border: 'rgba(239,68,68,0.35)' },
-  'Em manutencao': { bg: 'rgba(245,130,32,0.16)', text: '#ffd08a', border: 'rgba(245,130,32,0.38)' },
-  'Em manutencao ': { bg: 'rgba(245,130,32,0.16)', text: '#ffd08a', border: 'rgba(245,130,32,0.38)' },
-  'Em manutenÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': { bg: 'rgba(245,130,32,0.16)', text: '#ffd08a', border: 'rgba(245,130,32,0.38)' },
-  'Em manutenÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': { bg: 'rgba(245,130,32,0.16)', text: '#ffd08a', border: 'rgba(245,130,32,0.38)' },
+  Ativo: { bg: '#dcfce7', text: '#166534', border: 'rgba(34, 197, 94, 0.22)' },
+  Inativo: { bg: '#fee2e2', text: '#b91c1c', border: 'rgba(239, 68, 68, 0.22)' },
+  'Em manutencao': maintenanceTone,
+  'Em manutencao ': maintenanceTone,
+  'Em manutenÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': maintenanceTone,
+  'Em manutenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o': maintenanceTone,
 };
 
 export const STATUS_ICONS = {
@@ -51,8 +53,8 @@ export const STATUS_ICONS = {
   Inativo: 'X',
   'Em manutencao': 'TOOL',
   'Em manutencao ': 'TOOL',
-  'Em manutenÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'TOOL',
   'Em manutenÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'TOOL',
+  'Em manutenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o': 'TOOL',
 };
 
 export const TYPE_ICONS = {
@@ -76,16 +78,16 @@ export const TYPE_ICONS = {
 };
 
 export const SECTOR_ALIASES = {
+  'ExpediÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'Expedicao',
   'ExpediÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'Expedicao',
-  'ExpediÃƒÂ§ÃƒÂ£o': 'Expedicao',
   Expedicao: 'Expedicao',
+  'OperaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes': 'Operacao',
   'OperaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes': 'Operacao',
-  'OperaÃƒÂ§ÃƒÂµes': 'Operacao',
   Operacoes: 'Operacao',
+  'OperaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'Operacao',
   'OperaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'Operacao',
-  'OperaÃƒÂ§ÃƒÂ£o': 'Operacao',
   Administracao: 'ADM',
+  'AdministraÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'ADM',
   'AdministraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'ADM',
-  'AdministraÃƒÂ§ÃƒÂ£o': 'ADM',
   Fulfillment: 'Fullfilment',
 };

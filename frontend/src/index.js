@@ -4,31 +4,51 @@ import App from './App';
 
 const globalStyles = `
   :root {
-    --app-bg: #0a0a0a;
-    --panel-bg: #141414;
-    --panel-alt: #1b1b1b;
-    --panel-soft: #222222;
-    --panel-border: rgba(245, 130, 32, 0.22);
-    --text-primary: #f8fafc;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --brand: #f58220;
-    --brand-soft: #ff9a3d;
-    --brand-pale: #ffe2bf;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
+    --app-bg: #f3f6fb;
+    --app-bg-soft: #edf2f8;
+    --panel-bg: rgba(255, 255, 255, 0.9);
+    --panel-alt: #ffffff;
+    --panel-soft: #f7f9fc;
+    --panel-border: rgba(148, 163, 184, 0.22);
+    --panel-border-strong: rgba(148, 163, 184, 0.34);
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --brand: #1d4ed8;
+    --brand-soft: #3b82f6;
+    --brand-pale: #dbeafe;
+    --brand-ink: #1e3a8a;
+    --success: #15803d;
+    --success-soft: #dcfce7;
+    --warning: #d97706;
+    --warning-soft: #fef3c7;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --shadow-sm: 0 10px 30px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 18px 45px rgba(15, 23, 42, 0.08);
   }
   *, *::before, *::after { box-sizing: border-box; }
   html, body, #root { min-height: 100%; }
-  body { margin: 0; padding: 0; background: var(--app-bg); color: var(--text-primary); overflow-x: hidden; }
+  body {
+    margin: 0;
+    padding: 0;
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 28%),
+      linear-gradient(180deg, #f8fbff 0%, var(--app-bg) 38%, var(--app-bg-soft) 100%);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   button { font-family: inherit; }
   input, select, textarea { font-family: inherit; }
   table { border-spacing: 0; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #111111; }
-  ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+  ::selection { background: rgba(59, 130, 246, 0.16); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.7); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.86); }
 `;
 
 const style = document.createElement('style');

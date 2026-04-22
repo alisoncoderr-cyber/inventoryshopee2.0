@@ -10,26 +10,26 @@ import Maintenance from './pages/Maintenance';
 
 const DashboardIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <rect x="2" y="2" width="5" height="5" rx="1.2" fill={active ? '#fff7ed' : '#ff9a3d'} />
-    <rect x="9" y="2" width="5" height="8" rx="1.2" fill={active ? '#ffd08a' : '#6b7280'} />
-    <rect x="2" y="9" width="5" height="5" rx="1.2" fill={active ? '#ffd08a' : '#6b7280'} />
-    <rect x="9" y="12" width="5" height="2" rx="1" fill={active ? '#fff7ed' : '#ff9a3d'} />
+    <rect x="2" y="2" width="5" height="5" rx="1.2" fill={active ? '#1d4ed8' : '#64748b'} />
+    <rect x="9" y="2" width="5" height="8" rx="1.2" fill={active ? '#60a5fa' : '#94a3b8'} />
+    <rect x="2" y="9" width="5" height="5" rx="1.2" fill={active ? '#93c5fd' : '#cbd5e1'} />
+    <rect x="9" y="12" width="5" height="2" rx="1" fill={active ? '#1e3a8a' : '#94a3b8'} />
   </svg>
 );
 
 const DevicesIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <rect x="2" y="3" width="12" height="8" rx="1.5" stroke={active ? '#fff7ed' : '#ff9a3d'} strokeWidth="1.4" />
-    <path d="M5 13h6" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
-    <path d="M7 11v2M9 11v2" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
+    <rect x="2" y="3" width="12" height="8" rx="1.5" stroke={active ? '#1d4ed8' : '#64748b'} strokeWidth="1.4" />
+    <path d="M5 13h6" stroke={active ? '#3b82f6' : '#94a3b8'} strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M7 11v2M9 11v2" stroke={active ? '#3b82f6' : '#94a3b8'} strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 );
 
 const MaintenanceIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M6.2 3.4a2 2 0 0 0 2.82 2.83l3.03 3.02a1.6 1.6 0 0 1 0 2.26l-.5.5a1.6 1.6 0 0 1-2.26 0L6.27 9.02A2 2 0 0 0 3.44 6.2L5.2 4.44 6.2 3.4Z" fill={active ? '#fff7ed' : '#ff9a3d'} />
-    <path d="M4.2 10.8l1 1" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.4" strokeLinecap="round" />
-    <path d="M9.8 3.2l3 3" stroke={active ? '#ffd08a' : '#9ca3af'} strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M6.2 3.4a2 2 0 0 0 2.82 2.83l3.03 3.02a1.6 1.6 0 0 1 0 2.26l-.5.5a1.6 1.6 0 0 1-2.26 0L6.27 9.02A2 2 0 0 0 3.44 6.2L5.2 4.44 6.2 3.4Z" fill={active ? '#1d4ed8' : '#64748b'} />
+    <path d="M4.2 10.8l1 1" stroke={active ? '#3b82f6' : '#94a3b8'} strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M9.8 3.2l3 3" stroke={active ? '#3b82f6' : '#94a3b8'} strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 );
 
@@ -78,23 +78,29 @@ function App() {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        background: 'radial-gradient(circle at top, rgba(245,130,32,0.22), transparent 26%), var(--app-bg)',
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        background: 'transparent',
+        fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
         color: 'var(--text-primary)',
       }}
     >
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.56)', zIndex: 20 }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.28)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 20,
+          }}
         />
       )}
 
       <aside
         style={{
-          width: sidebarOpen ? 240 : 64,
-          background: 'linear-gradient(180deg, #111111 0%, #1a1a1a 50%, #0b0b0b 100%)',
-          color: '#fff',
+          width: sidebarOpen ? 248 : 72,
+          background: 'linear-gradient(180deg, rgba(248,250,252,0.98) 0%, rgba(255,255,255,0.96) 100%)',
+          color: 'var(--text-primary)',
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
@@ -105,39 +111,40 @@ function App() {
           height: isMobile ? '100vh' : 'auto',
           zIndex: 30,
           transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
-          boxShadow: isMobile && sidebarOpen ? '0 24px 48px rgba(0, 0, 0, 0.35)' : 'none',
+          borderRight: '1px solid var(--panel-border)',
+          boxShadow: isMobile && sidebarOpen ? '0 30px 70px rgba(15, 23, 42, 0.18)' : 'none',
         }}
       >
         <div
           style={{
-            padding: '20px 16px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            padding: '22px 16px',
+            borderBottom: '1px solid var(--panel-border)',
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
-            minHeight: 68,
+            gap: 12,
+            minHeight: 76,
           }}
         >
           <div
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #f58220, #ff9a3d 55%, #ffd08a)',
+              width: 40,
+              height: 40,
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, #1d4ed8, #3b82f6 60%, #bfdbfe)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
               overflow: 'hidden',
-              boxShadow: '0 6px 16px rgba(245,130,32,0.18)',
+              boxShadow: '0 12px 24px rgba(29, 78, 216, 0.18)',
             }}
           >
             <img src="/shopee-icon.webp" alt="Shopee" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           {sidebarOpen && (
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1 }}>Inventario SOC-PE2</div>
-              <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>Centro Logistico</div>
+              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Inventario SOC-PE2</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Centro Logistico</div>
             </div>
           )}
         </div>
@@ -147,12 +154,12 @@ function App() {
           style={{
             border: 'none',
             background: 'none',
-            color: '#9ca3af',
-            padding: '8px 16px',
+            color: 'var(--text-muted)',
+            padding: '10px 16px',
             cursor: 'pointer',
             textAlign: 'left',
             fontSize: 14,
-            marginTop: 4,
+            marginTop: 2,
             display: 'flex',
             alignItems: 'center',
           }}
@@ -161,7 +168,7 @@ function App() {
           {sidebarOpen ? '<' : '>'}
         </button>
 
-        <nav style={{ flex: 1, padding: '8px 0' }}>
+        <nav style={{ flex: 1, padding: '10px 10px 18px' }}>
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
@@ -170,21 +177,22 @@ function App() {
               style={{
                 width: '100%',
                 border: 'none',
-                background: 'none',
+                background: activePage === item.id ? 'linear-gradient(90deg, rgba(219,234,254,0.96), rgba(239,246,255,0.75))' : 'transparent',
                 cursor: 'pointer',
                 textAlign: 'left',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                padding: sidebarOpen ? '11px 16px' : '11px 0',
+                padding: sidebarOpen ? '12px 14px' : '12px 0',
+                marginBottom: 6,
                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                color: activePage === item.id ? '#fff' : '#cbd5e1',
-                background: activePage === item.id ? 'linear-gradient(90deg, rgba(245,130,32,0.36), rgba(255,154,61,0.14))' : 'transparent',
-                borderLeft: activePage === item.id ? '3px solid #f58220' : '3px solid transparent',
+                color: activePage === item.id ? 'var(--brand-ink)' : 'var(--text-secondary)',
+                borderRadius: 14,
                 transition: 'all 0.15s',
                 fontSize: 14,
-                fontWeight: activePage === item.id ? 600 : 400,
+                fontWeight: activePage === item.id ? 700 : 500,
+                boxShadow: activePage === item.id ? 'inset 0 0 0 1px rgba(59,130,246,0.1)' : 'none',
               }}
             >
               <span style={{ width: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -196,10 +204,16 @@ function App() {
         </nav>
 
         {sidebarOpen && (
-          <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ fontSize: 11, color: '#d1d5db' }}>Sistema de Inventario v1.1</div>
-            <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>Google Sheets Backend</div>
-            <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 10 }}>Painel operacional Shopee</div>
+          <div
+            style={{
+              padding: '18px 16px',
+              borderTop: '1px solid var(--panel-border)',
+              background: 'rgba(248,250,252,0.72)',
+            }}
+          >
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>Sistema de Inventario v1.1</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Google Sheets Backend</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 10 }}>Painel operacional Shopee</div>
           </div>
         )}
       </aside>
@@ -207,15 +221,15 @@ function App() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
         <header
           style={{
-            background: 'rgba(18, 18, 18, 0.9)',
-            borderBottom: '1px solid rgba(245,130,32,0.14)',
-            padding: isMobile ? '0 16px' : '0 24px',
-            height: 60,
+            background: 'rgba(248, 250, 252, 0.78)',
+            borderBottom: '1px solid var(--panel-border)',
+            padding: isMobile ? '0 16px' : '0 28px',
+            height: 68,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexShrink: 0,
-            backdropFilter: 'blur(10px)',
+            backdropFilter: 'blur(16px)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -224,27 +238,30 @@ function App() {
                 onClick={() => setSidebarOpen(true)}
                 style={{
                   border: '1px solid var(--panel-border)',
-                  background: '#18181b',
-                  color: '#f8fafc',
-                  borderRadius: 8,
+                  background: 'rgba(255,255,255,0.84)',
+                  color: 'var(--text-primary)',
+                  borderRadius: 12,
                   width: 36,
                   height: 36,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginRight: 4,
+                  marginRight: 6,
+                  boxShadow: 'var(--shadow-sm)',
                 }}
                 aria-label="Abrir menu"
               >
                 ≡
               </button>
             )}
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc' }}>{NAV_ITEMS.find((item) => item.id === activePage)?.label}</span>
+            <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              {NAV_ITEMS.find((item) => item.id === activePage)?.label}
+            </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f58220', boxShadow: '0 0 0 3px rgba(245,130,32,0.22)' }} />
-            {!isMobile && <span style={{ fontSize: 12, color: '#d1d5db' }}>Operacao ativa</span>}
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 4px rgba(34,197,94,0.14)' }} />
+            {!isMobile && <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>Operacao ativa</span>}
           </div>
         </header>
 
