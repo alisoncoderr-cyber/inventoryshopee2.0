@@ -77,6 +77,26 @@ export const TYPE_ICONS = {
   'Impressora A4': 'A4',
 };
 
+export const TYPE_CHART_COLORS = {
+  PDA: '#1d4ed8',
+  'Gatilho PDA': '#7c3aed',
+  Desktop: '#0f766e',
+  'Bateria de PDA': '#ea580c',
+  'Carregador Bateria PDA': '#f59e0b',
+  'Impressora de Etiqueta': '#db2777',
+  Bancada: '#475569',
+  'Leitor 2D': '#0891b2',
+  Laptop: '#2563eb',
+  Monitor: '#059669',
+  Mouse: '#65a30d',
+  'Kit Mouse/Teclado': '#4f46e5',
+  Paleteira: '#b45309',
+  Gaiola: '#be123c',
+  'Berco de PDA': '#9333ea',
+  Tablet: '#3b82f6',
+  'Impressora A4': '#dc2626',
+};
+
 export const SECTOR_ALIASES = {
   'ExpediÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'Expedicao',
   'ExpediÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'Expedicao',
