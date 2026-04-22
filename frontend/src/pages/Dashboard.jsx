@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { buildInventoryStats, getInventoryDevices } from '../services/inventoryCache';
-import { TYPE_CHART_COLORS } from '../utils/constants';
 
-const CHART_COLORS = ['#1d4ed8', '#3b82f6', '#0f766e', '#ea580c', '#7c3aed', '#db2777', '#0891b2', '#65a30d'];
+const CHART_COLORS = ['#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#0f766e', '#f59e0b', '#ef4444'];
 const cardStyle = {
   background: 'var(--panel-bg)',
   borderRadius: 24,
@@ -11,8 +10,6 @@ const cardStyle = {
   boxShadow: 'var(--shadow-md)',
   backdropFilter: 'blur(10px)',
 };
-
-const getTypeChartColor = (typeName, index) => TYPE_CHART_COLORS[typeName] || CHART_COLORS[index % CHART_COLORS.length];
 
 const StatCard = ({ title, value, helper, accent, icon }) => (
   <div style={{ ...cardStyle, padding: 24, position: 'relative', overflow: 'hidden', minHeight: 150 }}>
@@ -136,7 +133,7 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={tipoData} dataKey="value" nameKey="name" outerRadius={92} innerRadius={48} paddingAngle={4}>
-                    {tipoData.map((item, index) => <Cell key={item.name} fill={getTypeChartColor(item.name, index)} />)}
+                    {tipoData.map((_, index) => <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid rgba(148,163,184,0.2)', background: '#ffffff', boxShadow: '0 16px 35px rgba(15,23,42,0.08)' }} />
                 </PieChart>
@@ -145,7 +142,7 @@ const Dashboard = () => {
                 {tipoData.map((item, index) => (
                   <div key={item.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ width: 12, height: 12, borderRadius: '50%', display: 'inline-block', background: getTypeChartColor(item.name, index) }} />
+                      <span style={{ width: 12, height: 12, borderRadius: '50%', display: 'inline-block', background: CHART_COLORS[index % CHART_COLORS.length] }} />
                       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{item.name}</span>
                     </div>
                     <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.value}</strong>
