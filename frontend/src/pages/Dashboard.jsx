@@ -3,6 +3,25 @@ import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
 import { buildInventoryStats, getInventoryDevices } from '../services/inventoryCache';
 
 const CHART_COLORS = ['#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#0f766e', '#f59e0b', '#ef4444'];
+const DEVICE_TYPE_COLORS = {
+  PDA: '#1d4ed8',
+  'Gatilho PDA': '#7c3aed',
+  Desktop: '#0f766e',
+  'Bateria de PDA': '#ea580c',
+  'Carregador Bateria PDA': '#f59e0b',
+  'Impressora de Etiqueta': '#db2777',
+  Bancada: '#475569',
+  'Leitor 2D': '#0891b2',
+  Laptop: '#2563eb',
+  Monitor: '#059669',
+  Mouse: '#65a30d',
+  'Kit Mouse/Teclado': '#4f46e5',
+  Paleteira: '#b45309',
+  Gaiola: '#be123c',
+  'Berco de PDA': '#9333ea',
+  Tablet: '#3b82f6',
+  'Impressora A4': '#dc2626',
+};
 const cardStyle = {
   background: 'var(--panel-bg)',
   borderRadius: 24,
@@ -10,6 +29,8 @@ const cardStyle = {
   boxShadow: 'var(--shadow-md)',
   backdropFilter: 'blur(10px)',
 };
+
+const getDeviceTypeColor = (typeName, index) => DEVICE_TYPE_COLORS[typeName] || CHART_COLORS[index % CHART_COLORS.length];
 
 const StatCard = ({ title, value, helper, accent, icon }) => (
   <div style={{ ...cardStyle, padding: 24, position: 'relative', overflow: 'hidden', minHeight: 150 }}>
@@ -133,7 +154,7 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={tipoData} dataKey="value" nameKey="name" outerRadius={92} innerRadius={48} paddingAngle={4}>
-                    {tipoData.map((_, index) => <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                    {tipoData.map((item, index) => <Cell key={item.name} fill={getDeviceTypeColor(item.name, index)} />)}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid rgba(148,163,184,0.2)', background: '#ffffff', boxShadow: '0 16px 35px rgba(15,23,42,0.08)' }} />
                 </PieChart>
@@ -142,7 +163,7 @@ const Dashboard = () => {
                 {tipoData.map((item, index) => (
                   <div key={item.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ width: 12, height: 12, borderRadius: '50%', display: 'inline-block', background: CHART_COLORS[index % CHART_COLORS.length] }} />
+                      <span style={{ width: 12, height: 12, borderRadius: '50%', display: 'inline-block', background: getDeviceTypeColor(item.name, index) }} />
                       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{item.name}</span>
                     </div>
                     <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.value}</strong>
