@@ -12,6 +12,7 @@ const cardStyle = {
   boxShadow: 'var(--shadow-md)',
   backdropFilter: 'blur(10px)',
 };
+const labelAccentColor = '#d97706';
 
 const inputStyle = {
   padding: '12px 14px',
@@ -84,7 +85,7 @@ const downloadCsv = (rows) => {
 
 const KpiCard = ({ label, value, helper }) => (
   <div style={{ ...cardStyle, padding: 22 }}>
-    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div>
+    <div style={{ fontSize: 11, fontWeight: 800, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div>
     <div style={{ marginTop: 12, fontSize: 30, fontWeight: 800, color: 'var(--text-primary)' }}>{value}</div>
     <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>{helper}</div>
   </div>
@@ -267,7 +268,7 @@ const Devices = () => {
       <section style={{ ...cardStyle, padding: isMobile ? 24 : 30, background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.96) 48%, rgba(219,234,254,0.88) 100%)', color: 'var(--text-primary)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ fontSize: 12, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
+            <div style={{ fontSize: 12, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 30 : 40, lineHeight: 1.04, letterSpacing: '-0.03em' }}>Controle operacional de equipamentos</h1>
             <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15, maxWidth: 620 }}>Consulta, filtros e localizacao rapida da base para facilitar a operacao do dia a dia sem alterar o fluxo que voce ja usa.</p>
           </div>
@@ -292,7 +293,7 @@ const Devices = () => {
               <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Localizacao rapida por setor</h2>
               <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Ao clicar em um setor, abra ou feche os equipamentos alocados nele.</p>
             </div>
-            {topSector && <div style={{ padding: '12px 14px', borderRadius: 16, background: '#eff6ff', border: '1px solid rgba(59,130,246,0.16)' }}><div style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand)', textTransform: 'uppercase' }}>Maior concentracao</div><div style={{ marginTop: 4, fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{topSector.label}</div><div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>{topSector.value} equipamento(s)</div></div>}
+            {topSector && <div style={{ padding: '12px 14px', borderRadius: 16, background: '#fff7ed', border: '1px solid rgba(245,158,11,0.18)' }}><div style={{ fontSize: 11, fontWeight: 700, color: labelAccentColor, textTransform: 'uppercase' }}>Maior concentracao</div><div style={{ marginTop: 4, fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{topSector.label}</div><div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>{topSector.value} equipamento(s)</div></div>}
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
             {sectorTotals.map((sector) => <FilterChip key={sector.name} active={selectedSectorPreview === sector.name} label={sector.label} count={sector.value} onClick={() => { const nextSector = selectedSectorPreview === sector.name ? '' : sector.name; setSelectedSectorPreview(nextSector); setFilterSector(nextSector || 'all'); setCurrentPage(1); }} />)}
@@ -330,24 +331,24 @@ const Devices = () => {
                 </div>
                 <StatusBadge status={selectedQuickDevice.status} />
               </div>
-              <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 12, background: '#eff6ff', border: '1px solid rgba(59,130,246,0.14)', fontSize: 13, color: 'var(--brand)' }}>
+              <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 12, background: '#fff7ed', border: '1px solid rgba(245,158,11,0.14)', fontSize: 13, color: labelAccentColor }}>
                 {selectedQuickGroup.count} equipamento(s) encontrado(s) para {selectedQuickGroup.type}
               </div>
               <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--brand)', textTransform: 'uppercase' }}>Setor</div>
+                  <div style={{ fontSize: 11, color: labelAccentColor, textTransform: 'uppercase' }}>Setor</div>
                   <div style={{ marginTop: 4, fontSize: 14, color: 'var(--text-primary)' }}>{normalizeSectorName(selectedQuickDevice.setor)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--brand)', textTransform: 'uppercase' }}>Serie</div>
+                  <div style={{ fontSize: 11, color: labelAccentColor, textTransform: 'uppercase' }}>Serie</div>
                   <div style={{ marginTop: 4, fontSize: 14, color: 'var(--text-primary)' }}>{selectedQuickDevice.numero_serie || '-'}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--brand)', textTransform: 'uppercase' }}>Responsavel</div>
+                  <div style={{ fontSize: 11, color: labelAccentColor, textTransform: 'uppercase' }}>Responsavel</div>
                   <div style={{ marginTop: 4, fontSize: 14, color: 'var(--text-primary)' }}>{selectedQuickDevice.pessoa_atribuida || '-'}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--brand)', textTransform: 'uppercase' }}>Ticket</div>
+                  <div style={{ fontSize: 11, color: labelAccentColor, textTransform: 'uppercase' }}>Ticket</div>
                   <div style={{ marginTop: 4, fontSize: 14, color: 'var(--text-primary)' }}>{selectedQuickDevice.ticket || 'Sem ticket'}</div>
                 </div>
               </div>
@@ -362,7 +363,7 @@ const Devices = () => {
             <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Central de equipamentos</h2>
             <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Pesquisa mais completa, filtros e tabela pronta para a operacao do dia a dia.</p>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--brand)', fontWeight: 700 }}>{pagination.total} registro(s) encontrado(s)</div>
+          <div style={{ fontSize: 13, color: labelAccentColor, fontWeight: 700 }}>{pagination.total} registro(s) encontrado(s)</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
@@ -386,7 +387,7 @@ const Devices = () => {
           {loading ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Carregando base operacional...</div> : devices.length === 0 ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento encontrado com os filtros atuais.</div> : (
             <div style={{ overflowX: 'auto', background: '#ffffff' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
-                <thead><tr style={{ background: '#f8fafc' }}>{['Tipo de Equipamento', 'Categoria', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid rgba(148,163,184,0.18)' }}>{header}</th>)}</tr></thead>
+                <thead><tr style={{ background: '#f8fafc' }}>{['Tipo de Equipamento', 'Categoria', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid rgba(148,163,184,0.18)' }}>{header}</th>)}</tr></thead>
                 <tbody>
                   {devices.map((device, index) => (
                     <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff', borderTop: '1px solid rgba(148,163,184,0.12)' }}>
@@ -425,10 +426,10 @@ const Devices = () => {
         <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Resumo da consulta</h2>
         <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Indicadores diretos da base atualmente filtrada.</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 700, textTransform: 'uppercase' }}>Setor selecionado</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{filterSector === 'all' ? 'Todos os setores' : filterSector}</div></div>
-          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 700, textTransform: 'uppercase' }}>Tipos visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{new Set(allDevices.map((item) => item.tipo).filter(Boolean)).size}</div></div>
-          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 700, textTransform: 'uppercase' }}>Setores visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{derivedStats.sectorsVisible}</div></div>
-          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 700, textTransform: 'uppercase' }}>Itens nesta pagina</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{devices.length}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: labelAccentColor, fontWeight: 700, textTransform: 'uppercase' }}>Setor selecionado</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{filterSector === 'all' ? 'Todos os setores' : filterSector}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: labelAccentColor, fontWeight: 700, textTransform: 'uppercase' }}>Tipos visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{new Set(allDevices.map((item) => item.tipo).filter(Boolean)).size}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: labelAccentColor, fontWeight: 700, textTransform: 'uppercase' }}>Setores visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{derivedStats.sectorsVisible}</div></div>
+          <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: labelAccentColor, fontWeight: 700, textTransform: 'uppercase' }}>Itens nesta pagina</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{devices.length}</div></div>
         </div>
       </section>
 
