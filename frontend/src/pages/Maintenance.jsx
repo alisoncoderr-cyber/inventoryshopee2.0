@@ -11,6 +11,25 @@ const cardStyle = {
   backdropFilter: 'blur(10px)',
 };
 
+const tableHeaderStyle = {
+  padding: '13px 14px',
+  textAlign: 'left',
+  fontSize: 11,
+  color: '#b45309',
+  textTransform: 'uppercase',
+  letterSpacing: '.06em',
+  borderBottom: '1px solid rgba(148,163,184,0.18)',
+  whiteSpace: 'nowrap',
+};
+
+const tableCellStyle = {
+  padding: '14px',
+  fontSize: 13,
+  color: 'var(--text-secondary)',
+  borderTop: '1px solid rgba(148,163,184,0.12)',
+  verticalAlign: 'middle',
+};
+
 const KpiCard = ({ label, value, helper }) => (
   <div style={{ ...cardStyle, padding: 22 }}>
     <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div>
@@ -112,33 +131,33 @@ const Maintenance = () => {
             <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Fila de manutencao</h2>
             <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Lista de equipamentos que estao fora da operacao por manutencao.</p>
           </div>
-          <div style={{ display: 'grid', gap: 10 }}>
-            {maintenanceDevices.length > 0 ? maintenanceDevices.map((device) => (
-              <div key={device.id} style={{ padding: '16px 18px', borderRadius: 18, border: '1px solid rgba(148,163,184,0.14)', background: 'var(--panel-soft)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div>
-                    <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>{device.tipo} • {normalizeSectorName(device.setor)} • {device.numero_serie || 'Sem serie'}</div>
-                  </div>
-                  <StatusBadge status={device.status} />
-                </div>
-                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#b45309', textTransform: 'uppercase' }}>Ticket</div>
-                    <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-secondary)' }}>{device.ticket || 'Nao informado'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#b45309', textTransform: 'uppercase' }}>Responsavel</div>
-                    <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-secondary)' }}>{device.pessoa_atribuida || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#b45309', textTransform: 'uppercase' }}>Cadastro</div>
-                    <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-secondary)' }}>{device.data_cadastro || '-'}</div>
-                  </div>
-                </div>
-                {device.observacoes && <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: '#fff7ed', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6, border: '1px solid rgba(245,158,11,0.12)' }}>{device.observacoes}</div>}
+          <div style={{ borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.18)' }}>
+            {maintenanceDevices.length > 0 ? (
+              <div style={{ overflowX: 'auto', background: '#ffffff' }}>
+                <table style={{ width: '100%', minWidth: 780, borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc' }}>
+                      {['Equipamento', 'Setor', 'Ticket', 'Responsavel', 'Cadastro', 'Status'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {maintenanceDevices.map((device, index) => (
+                      <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff' }}>
+                        <td style={tableCellStyle}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div>
+                          <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{device.tipo || 'Sem tipo'}</div>
+                        </td>
+                        <td style={tableCellStyle}>{normalizeSectorName(device.setor)}</td>
+                        <td style={{ ...tableCellStyle, color: device.ticket ? '#b45309' : '#64748b', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Nao informado'}</td>
+                        <td style={tableCellStyle}>{device.pessoa_atribuida || '-'}</td>
+                        <td style={tableCellStyle}>{device.data_cadastro || '-'}</td>
+                        <td style={tableCellStyle}><StatusBadge status={device.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )) : <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum equipamento em manutencao no momento.</div>}
+            ) : <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento em manutencao no momento.</div>}
           </div>
         </div>
 
@@ -148,9 +167,12 @@ const Maintenance = () => {
             <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Itens em manutencao que ainda precisam de ticket formal.</p>
             <div style={{ display: 'grid', gap: 10 }}>
               {pendingTicketDevices.length > 0 ? pendingTicketDevices.map((device) => (
-                <div key={device.id} style={{ padding: '14px 16px', borderRadius: 16, border: '1px solid rgba(245,158,11,0.16)', background: '#fffaf0' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div>
-                  <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>{normalizeSectorName(device.setor)} • {device.numero_serie || 'Sem serie'}</div>
+                <div key={device.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(245,158,11,0.14)', background: '#fffaf0' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{device.nome_dispositivo}</div>
+                    <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{normalizeSectorName(device.setor)}</div>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Sem ticket</span>
                 </div>
               )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Todos os itens em manutencao possuem ticket.</div>}
             </div>
