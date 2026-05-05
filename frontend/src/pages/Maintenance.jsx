@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { updateDevice } from '../services/api';
 import { getInventoryDevices } from '../services/inventoryCache';
 import { STATUS_COLORS } from '../utils/constants';
 import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
@@ -56,6 +57,10 @@ const Maintenance = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
+  const [ticketDevice, setTicketDevice] = useState(null);
+  const [ticketForm, setTicketForm] = useState({ ticket: '', observacoes: '' });
+  const [ticketSaving, setTicketSaving] = useState(false);
+  const [ticketError, setTicketError] = useState('');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -63,22 +68,62 @@ const Maintenance = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    const loadDevices = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const inventoryDevices = await getInventoryDevices();
-        setDevices(inventoryDevices);
-      } catch (err) {
-        setError(err.message || 'Erro ao carregar manutencao');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadDevices = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const inventoryDevices = await getInventoryDevices({ force: true });
+      setDevices(inventoryDevices);
+    } catch (err) {
+      setError(err.message || 'Erro ao carregar manutencao');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadDevices();
   }, []);
+
+  const openTicketModal = (device) => {
+    setTicketDevice(device);
+    setTicketForm({ ticket: device.ticket || '', observacoes: device.observacoes || '' });
+    setTicketError('');
+  };
+
+  const closeTicketModal = () => {
+    if (ticketSaving) return;
+    setTicketDevice(null);
+    setTicketForm({ ticket: '', observacoes: '' });
+    setTicketError('');
+  };
+
+  const handleTicketSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!ticketDevice) return;
+    if (!ticketForm.ticket.trim()) {
+      setTicketError('Informe o numero do ticket.');
+      return;
+    }
+
+    setTicketSaving(true);
+    setTicketError('');
+
+    try {
+      await updateDevice(ticketDevice.id, {
+        ...ticketDevice,
+        ticket: ticketForm.ticket.trim(),
+        observacoes: ticketForm.observacoes.trim(),
+      });
+      await loadDevices();
+      closeTicketModal();
+    } catch (err) {
+      setTicketError(err.message || 'Erro ao salvar ticket');
+    } finally {
+      setTicketSaving(false);
+    }
+  };
 
   const maintenanceDevices = useMemo(() => sortDevices(devices.filter((device) => isMaintenanceStatus(device.status)), 'recent'), [devices]);
   const pendingTicketDevices = useMemo(() => maintenanceDevices.filter((device) => !String(device.ticket || '').trim()), [maintenanceDevices]);
@@ -167,13 +212,13 @@ const Maintenance = () => {
             <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Itens em manutencao que ainda precisam de ticket formal.</p>
             <div style={{ display: 'grid', gap: 10 }}>
               {pendingTicketDevices.length > 0 ? pendingTicketDevices.map((device) => (
-                <div key={device.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(245,158,11,0.14)', background: '#fffaf0' }}>
+                <button key={device.id} type="button" onClick={() => openTicketModal(device)} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(245,158,11,0.14)', background: '#fffaf0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{device.nome_dispositivo}</div>
-                    <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{normalizeSectorName(device.setor)}</div>
+                    <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{normalizeSectorName(device.setor)} {device.observacoes ? `- ${device.observacoes}` : ''}</div>
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Sem ticket</span>
-                </div>
+                </button>
               )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Todos os itens em manutencao possuem ticket.</div>}
             </div>
           </div>
@@ -187,6 +232,46 @@ const Maintenance = () => {
           </div>
         </div>
       </section>
+
+      {ticketDevice && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.36)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+          onClick={(event) => event.target === event.currentTarget && closeTicketModal()}
+        >
+          <form onSubmit={handleTicketSubmit} style={{ ...cardStyle, width: '100%', maxWidth: 520, padding: 24, background: '#ffffff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 20, color: 'var(--text-primary)' }}>Adicionar ticket</h3>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{ticketDevice.nome_dispositivo} - {normalizeSectorName(ticketDevice.setor)}</p>
+              </div>
+              <button type="button" onClick={closeTicketModal} style={{ border: '1px solid rgba(148,163,184,0.18)', background: '#f8fafc', color: 'var(--text-secondary)', borderRadius: 12, width: 36, height: 36, cursor: 'pointer', fontSize: 16 }}>x</button>
+            </div>
+
+            {ticketError && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'var(--danger-soft)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13 }}>Erro: {ticketError}</div>}
+
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Ticket</label>
+            <input
+              value={ticketForm.ticket}
+              onChange={(event) => setTicketForm((prev) => ({ ...prev, ticket: event.target.value }))}
+              placeholder="Ex: TKT-2026-001"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.24)', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'inherit', marginBottom: 16 }}
+            />
+
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Defeito / observacao</label>
+            <textarea
+              value={ticketForm.observacoes}
+              onChange={(event) => setTicketForm((prev) => ({ ...prev, observacoes: event.target.value }))}
+              placeholder="Ex: Tela quebrada, nao liga, falha no leitor..."
+              style={{ width: '100%', boxSizing: 'border-box', minHeight: 110, resize: 'vertical', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.24)', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'inherit' }}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap', marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(148,163,184,0.14)' }}>
+              <button type="button" onClick={closeTicketModal} style={{ padding: '10px 16px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.22)', background: '#ffffff', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: 'inherit' }}>Cancelar</button>
+              <button type="submit" disabled={ticketSaving} style={{ padding: '10px 18px', borderRadius: 12, border: 'none', background: ticketSaving ? '#94a3b8' : '#d97706', color: '#ffffff', cursor: ticketSaving ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: 'inherit' }}>{ticketSaving ? 'Salvando...' : 'Salvar ticket'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
