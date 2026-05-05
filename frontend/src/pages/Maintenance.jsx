@@ -31,6 +31,69 @@ const tableCellStyle = {
   verticalAlign: 'middle',
 };
 
+const MAINTENANCE_PAGE_SIZE = 8;
+const PENDING_TICKET_PAGE_SIZE = 6;
+
+const pageButtonStyle = {
+  width: 34,
+  height: 34,
+  borderRadius: 10,
+  border: '1px solid rgba(148,163,184,0.22)',
+  background: '#ffffff',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  fontSize: 13,
+  fontWeight: 800,
+  fontFamily: 'inherit',
+};
+
+const getPageItems = (items, page, pageSize) => {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+
+  return {
+    totalPages,
+    safePage,
+    startIndex,
+    visibleItems: items.slice(startIndex, startIndex + pageSize),
+  };
+};
+
+const PaginationControls = ({ totalItems, page, totalPages, startIndex, pageSize, onPageChange }) => {
+  if (totalItems <= pageSize) return null;
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 14 }}>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+        {startIndex + 1}-{Math.min(startIndex + pageSize, totalItems)} de {totalItems}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {Array.from({ length: totalPages }, (_, index) => {
+          const pageNumber = index + 1;
+          const active = pageNumber === page;
+
+          return (
+            <button
+              key={pageNumber}
+              type="button"
+              onClick={() => onPageChange(pageNumber)}
+              style={{
+                ...pageButtonStyle,
+                background: active ? 'var(--brand)' : '#ffffff',
+                color: active ? '#ffffff' : 'var(--text-secondary)',
+                borderColor: active ? 'transparent' : 'rgba(148,163,184,0.22)',
+              }}
+            >
+              {pageNumber}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const looksLikeSerial = (value = '') => /^s?\d{8,}$/i.test(String(value).trim());
 
 const getEquipmentDisplayName = (device = {}) => {
@@ -74,6 +137,8 @@ const Maintenance = () => {
   const [ticketForm, setTicketForm] = useState({ ticket: '', observacoes: '' });
   const [ticketSaving, setTicketSaving] = useState(false);
   const [ticketError, setTicketError] = useState('');
+  const [maintenancePage, setMaintenancePage] = useState(1);
+  const [pendingTicketPage, setPendingTicketPage] = useState(1);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -155,6 +220,8 @@ const Maintenance = () => {
   const topSector = maintenanceBySector[0];
   const withTicketCount = maintenanceDevices.filter((device) => String(device.ticket || '').trim()).length;
   const assignedCount = maintenanceDevices.filter((device) => String(device.pessoa_atribuida || '').trim()).length;
+  const maintenancePageData = getPageItems(maintenanceDevices, maintenancePage, MAINTENANCE_PAGE_SIZE);
+  const pendingTicketPageData = getPageItems(pendingTicketDevices, pendingTicketPage, PENDING_TICKET_PAGE_SIZE);
 
   if (loading) return <div style={{ ...cardStyle, padding: 32, minHeight: 120 }} />;
   if (error) return <div style={{ ...cardStyle, padding: 24, color: '#b91c1c', background: 'var(--danger-soft)', borderColor: 'rgba(239,68,68,0.2)' }}>Erro ao carregar manutencao: {error}</div>;
@@ -199,7 +266,7 @@ const Maintenance = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {maintenanceDevices.map((device, index) => (
+                    {maintenancePageData.visibleItems.map((device, index) => (
                       <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff' }}>
                         <td style={tableCellStyle}>
                           <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{getEquipmentDisplayName(device)}</div>
@@ -218,6 +285,14 @@ const Maintenance = () => {
               </div>
             ) : <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento em manutencao no momento.</div>}
           </div>
+          <PaginationControls
+            totalItems={maintenanceDevices.length}
+            page={maintenancePageData.safePage}
+            totalPages={maintenancePageData.totalPages}
+            startIndex={maintenancePageData.startIndex}
+            pageSize={MAINTENANCE_PAGE_SIZE}
+            onPageChange={setMaintenancePage}
+          />
         </div>
 
         <div style={{ display: 'grid', gap: 20 }}>
@@ -225,7 +300,7 @@ const Maintenance = () => {
             <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Pendencias sem ticket</h2>
             <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Itens em manutencao que ainda precisam de ticket formal.</p>
             <div style={{ display: 'grid', gap: 10 }}>
-              {pendingTicketDevices.length > 0 ? pendingTicketDevices.map((device) => (
+              {pendingTicketDevices.length > 0 ? pendingTicketPageData.visibleItems.map((device) => (
                 <button key={device.id} type="button" onClick={() => openTicketModal(device)} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(245,158,11,0.14)', background: '#fffaf0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getEquipmentDisplayName(device)}</div>
@@ -235,6 +310,14 @@ const Maintenance = () => {
                 </button>
               )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Todos os itens em manutencao possuem ticket.</div>}
             </div>
+            <PaginationControls
+              totalItems={pendingTicketDevices.length}
+              page={pendingTicketPageData.safePage}
+              totalPages={pendingTicketPageData.totalPages}
+              startIndex={pendingTicketPageData.startIndex}
+              pageSize={PENDING_TICKET_PAGE_SIZE}
+              onPageChange={setPendingTicketPage}
+            />
           </div>
 
           <div style={{ ...cardStyle, padding: 22 }}>
