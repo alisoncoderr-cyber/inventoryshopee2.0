@@ -31,6 +31,19 @@ const tableCellStyle = {
   verticalAlign: 'middle',
 };
 
+const looksLikeSerial = (value = '') => /^s?\d{8,}$/i.test(String(value).trim());
+
+const getEquipmentDisplayName = (device = {}) => {
+  const name = String(device.nome_dispositivo || '').trim();
+  const type = String(device.tipo || '').trim();
+
+  if (!name || looksLikeSerial(name) || name === device.numero_serie) {
+    return type || 'Equipamento';
+  }
+
+  return name;
+};
+
 const KpiCard = ({ label, value, helper }) => (
   <div style={{ ...cardStyle, padding: 22 }}>
     <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div>
@@ -189,8 +202,8 @@ const Maintenance = () => {
                     {maintenanceDevices.map((device, index) => (
                       <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff' }}>
                         <td style={tableCellStyle}>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div>
-                          <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{device.tipo || 'Sem tipo'}</div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{getEquipmentDisplayName(device)}</div>
+                          <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{device.marca || device.modelo ? [device.marca, device.modelo].filter(Boolean).join(' ') : 'Sem detalhes'}</div>
                         </td>
                         <td style={tableCellStyle}>{normalizeSectorName(device.setor)}</td>
                         <td style={{ ...tableCellStyle, color: device.ticket ? '#b45309' : '#64748b', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Nao informado'}</td>
@@ -214,7 +227,7 @@ const Maintenance = () => {
               {pendingTicketDevices.length > 0 ? pendingTicketDevices.map((device) => (
                 <button key={device.id} type="button" onClick={() => openTicketModal(device)} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(245,158,11,0.14)', background: '#fffaf0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{device.nome_dispositivo}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getEquipmentDisplayName(device)}</div>
                     <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{normalizeSectorName(device.setor)} {device.observacoes ? `- ${device.observacoes}` : ''}</div>
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Sem ticket</span>
@@ -242,7 +255,7 @@ const Maintenance = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 20, color: 'var(--text-primary)' }}>Adicionar ticket</h3>
-                <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{ticketDevice.nome_dispositivo} - {normalizeSectorName(ticketDevice.setor)}</p>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{getEquipmentDisplayName(ticketDevice)} - {normalizeSectorName(ticketDevice.setor)}</p>
               </div>
               <button type="button" onClick={closeTicketModal} style={{ border: '1px solid rgba(148,163,184,0.18)', background: '#f8fafc', color: 'var(--text-secondary)', borderRadius: 12, width: 36, height: 36, cursor: 'pointer', fontSize: 16 }}>x</button>
             </div>
