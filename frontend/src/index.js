@@ -44,6 +44,18 @@ const globalStyles = `
   button { font-family: inherit; }
   input, select, textarea { font-family: inherit; }
   table { border-spacing: 0; }
+  .page-loader-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--brand);
+    display: inline-block;
+    animation: page-loader-bounce 0.84s ease-in-out infinite;
+  }
+  @keyframes page-loader-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+    40% { transform: translateY(-7px); opacity: 1; }
+  }
   ::selection { background: rgba(59, 130, 246, 0.16); }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }

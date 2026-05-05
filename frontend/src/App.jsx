@@ -3,7 +3,7 @@
 // Componente raiz com layout e navegacao principal
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Dashboard from './pages/Dashboard';
 import Devices from './pages/Devices';
 import Maintenance from './pages/Maintenance';
@@ -39,10 +39,47 @@ const NAV_ITEMS = [
   { id: 'maintenance', label: 'Manutencao', icon: MaintenanceIcon },
 ];
 
+const PageLoader = ({ label }) => (
+  <div
+    style={{
+      minHeight: 'calc(100vh - 116px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 32,
+    }}
+  >
+    <div
+      style={{
+        minWidth: 220,
+        padding: '24px 28px',
+        borderRadius: 20,
+        background: 'rgba(255,255,255,0.86)',
+        border: '1px solid var(--panel-border)',
+        boxShadow: 'var(--shadow-md)',
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
+        {[0, 1, 2].map((index) => (
+          <span
+            key={index}
+            className="page-loader-dot"
+            style={{ animationDelay: `${index * 0.14}s` }}
+          />
+        ))}
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700 }}>Carregando {label}</div>
+    </div>
+  </div>
+);
+
 function App() {
   const [activePage, setActivePage] = useState('dashboard');
+  const [pageLoading, setPageLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 960);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 960);
+  const pageLoadingTimer = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -56,9 +93,21 @@ function App() {
   }, []);
 
   const handleNavigate = (pageId) => {
+    if (pageId === activePage) {
+      if (isMobile) setSidebarOpen(false);
+      return;
+    }
+
+    if (pageLoadingTimer.current) window.clearTimeout(pageLoadingTimer.current);
+    setPageLoading(true);
     setActivePage(pageId);
     if (isMobile) setSidebarOpen(false);
+    pageLoadingTimer.current = window.setTimeout(() => setPageLoading(false), 520);
   };
+
+  useEffect(() => () => {
+    if (pageLoadingTimer.current) window.clearTimeout(pageLoadingTimer.current);
+  }, []);
 
   const renderPage = () => {
     switch (activePage) {
@@ -265,7 +314,9 @@ function App() {
           </div>
         </header>
 
-        <main style={{ flex: 1, overflow: 'auto', padding: isMobile ? 16 : 24 }}>{renderPage()}</main>
+        <main style={{ flex: 1, overflow: 'auto', padding: isMobile ? 16 : 24 }}>
+          {pageLoading ? <PageLoader label={NAV_ITEMS.find((item) => item.id === activePage)?.label || 'pagina'} /> : renderPage()}
+        </main>
       </div>
     </div>
   );
