@@ -47,7 +47,8 @@ export const buildInventoryStats = (devices = []) => {
   const comTicket = devices.filter((device) =>
     String(device.ticket || '').trim()
   ).length;
-  const aguardandoAprovacao = devices.filter(isAwaitingLeaderApproval).length;
+  const aguardandoAprovacaoDevices = devices.filter(isAwaitingLeaderApproval);
+  const aguardandoAprovacao = aguardandoAprovacaoDevices.length;
   const laptopsAtribuidos = devices.filter(
     (device) =>
       device.tipo === 'Laptop' && String(device.pessoa_atribuida || '').trim()
@@ -72,6 +73,7 @@ export const buildInventoryStats = (devices = []) => {
     inativos,
     com_ticket: comTicket,
     aguardando_aprovacao: aguardandoAprovacao,
+    aguardando_aprovacao_itens: sortDevices(aguardandoAprovacaoDevices, 'recent').slice(0, 8),
     laptops_atribuidos: laptopsAtribuidos,
     percentual_ativos: devices.length ? Math.round((ativos / devices.length) * 100) : 0,
     por_setor: porSetor,

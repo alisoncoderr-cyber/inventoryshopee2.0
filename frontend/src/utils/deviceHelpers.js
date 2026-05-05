@@ -20,6 +20,8 @@ export const isAwaitingLeaderApproval = (device = {}) => {
   return (
     searchableText.includes('aguardando aprovacao') ||
     searchableText.includes('pendente aprovacao') ||
+    searchableText.includes('pendente aprovacao sl') ||
+    searchableText.includes('aprovacao sl') ||
     searchableText.includes('aprovacao lider') ||
     searchableText.includes('aprovar lider') ||
     searchableText.includes('site lider')

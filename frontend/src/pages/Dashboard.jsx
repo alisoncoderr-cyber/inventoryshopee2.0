@@ -31,6 +31,19 @@ const SummaryList = ({ data, emptyText }) => (
   </div>
 );
 
+const looksLikeSerial = (value = '') => /^s?\d{8,}$/i.test(String(value).trim());
+
+const getEquipmentDisplayName = (device = {}) => {
+  const name = String(device.nome_dispositivo || '').trim();
+  const type = String(device.tipo || '').trim();
+
+  if (!name || looksLikeSerial(name) || name === device.numero_serie) {
+    return type || 'Equipamento';
+  }
+
+  return name;
+};
+
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +105,29 @@ const Dashboard = () => {
         <StatCard title="Equipamentos ativos" value={stats.ativos} helper="itens prontos para operacao" icon="/icons/active.png" />
         <StatCard title="Em manutencao" value={stats.em_manutencao} helper={`${maintenanceRate} da base exige atencao`} icon="/icons/maintenance.png" />
         <StatCard title="Aguardando aprovacao" value={stats.aguardando_aprovacao} helper="tickets pendentes para o lider aprovar" icon="/icons/approval.png" />
+      </section>
+
+      <section style={{ ...cardStyle, padding: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Aguardando aprovacao SL</h3>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Use "Pendente aprovacao SL" nas observacoes para acompanhar os tickets que o lider precisa aprovar.</p>
+          </div>
+          <div style={{ padding: '8px 12px', borderRadius: 999, background: '#f8fafc', border: '1px solid rgba(148,163,184,0.18)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 800 }}>{stats.aguardando_aprovacao} pendente(s)</div>
+        </div>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {(stats.aguardando_aprovacao_itens || []).length > 0 ? stats.aguardando_aprovacao_itens.map((device) => (
+            <div key={device.id} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(180px, 1fr) 120px minmax(140px, .7fr) minmax(220px, 1.2fr)', gap: 12, alignItems: 'center', padding: '14px 16px', borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{getEquipmentDisplayName(device)}</div>
+                <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{device.tipo || 'Sem tipo'}</div>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{device.setor || 'Sem setor'}</div>
+              <div style={{ fontSize: 13, color: '#b45309', fontWeight: 700 }}>{device.ticket || 'Sem ticket'}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{device.observacoes || 'Sem observacao'}</div>
+            </div>
+          )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', background: 'var(--panel-soft)', borderRadius: 16, border: '1px solid rgba(148,163,184,0.14)' }}>Nenhum equipamento marcado como pendente de aprovacao SL.</div>}
+        </div>
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 20 }}>
