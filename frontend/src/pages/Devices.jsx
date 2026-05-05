@@ -389,8 +389,8 @@ const Devices = () => {
         <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(100,116,139,0.18)' }}>
           {loading ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Carregando base operacional...</div> : devices.length === 0 ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento encontrado com os filtros atuais.</div> : (
             <div style={{ overflowX: 'auto', background: '#ffffff' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
-                <thead><tr style={{ background: '#f3f6fa' }}>{['Tipo de Equipamento', 'Categoria', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '13px 14px', textAlign: 'left', fontSize: 12, color: '#475467', textTransform: 'uppercase', letterSpacing: '.03em', borderBottom: '1px solid rgba(100,116,139,0.18)' }}>{header}</th>)}</tr></thead>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1180 }}>
+                <thead><tr style={{ background: '#f3f6fa' }}>{['Tipo de Equipamento', 'Categoria', 'Marca/Modelo', 'Serie', 'Data de Aquisicao', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '13px 14px', textAlign: 'left', fontSize: 12, color: '#475467', textTransform: 'uppercase', letterSpacing: '.03em', borderBottom: '1px solid rgba(100,116,139,0.18)' }}>{header}</th>)}</tr></thead>
                 <tbody>
                   {devices.map((device, index) => (
                     <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fafbfc', borderTop: '1px solid rgba(100,116,139,0.12)' }}>
@@ -398,6 +398,7 @@ const Devices = () => {
                       <td style={{ padding: '15px 14px', fontSize: 14, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{(TYPE_ICONS[device.tipo] || 'ITEM')} {device.tipo}</td>
                       <td style={{ padding: '15px 14px' }}><div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{device.marca}</div><div style={{ marginTop: 5, fontSize: 12, color: 'var(--text-muted)' }}>{device.modelo}</div></td>
                       <td style={{ padding: '15px 14px', fontSize: 13, color: '#111827', fontFamily: '"Cascadia Mono", Consolas, monospace' }}>{device.numero_serie}</td>
+                      <td style={{ padding: '15px 14px', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{device.data_aquisicao || '-'}</td>
                       <td style={{ padding: '15px 14px', fontSize: 14, color: 'var(--text-secondary)' }}>{device.setor}</td>
                       <td style={{ padding: '15px 14px' }}><StatusBadge status={device.status} /></td>
                       <td style={{ padding: '15px 14px', fontSize: 13, color: device.ticket ? '#92400e' : '#98a2b3', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Sem ticket'}</td>
