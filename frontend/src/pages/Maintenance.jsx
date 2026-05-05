@@ -208,10 +208,10 @@ const Maintenance = () => {
           <div style={{ borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.18)' }}>
             {maintenanceDevices.length > 0 ? (
               <div style={{ overflowX: 'auto', background: '#ffffff' }}>
-                <table style={{ width: '100%', minWidth: 900, borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', minWidth: 980, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      {['Equipamento', 'Serie', 'Setor', 'Ticket', 'Responsavel', 'Cadastro', 'Status'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
+                      {['Equipamento', 'Serie', 'Setor', 'Ticket', 'Responsavel', 'Cadastro', 'Status', 'Detalhes'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -229,6 +229,15 @@ const Maintenance = () => {
                         <td style={tableCellStyle}>{device.pessoa_atribuida || '-'}</td>
                         <td style={tableCellStyle}>{device.data_cadastro || '-'}</td>
                         <td style={tableCellStyle}><StatusBadge status={device.status} /></td>
+                        <td style={tableCellStyle}>
+                          <button
+                            type="button"
+                            onClick={() => openDeviceDetails(device)}
+                            style={{ padding: '7px 10px', borderRadius: 10, border: '1px solid rgba(29,78,216,0.18)', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontSize: 12, fontWeight: 800, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Ver detalhes
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
