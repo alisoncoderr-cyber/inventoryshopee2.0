@@ -3,7 +3,7 @@ import { deleteDevice } from '../services/api';
 import { getInventoryDevices, invalidateInventoryCache } from '../services/inventoryCache';
 import { EQUIPMENT_TYPES, SECTORS, STATUS_COLORS, STATUS_OPTIONS, TYPE_ICONS } from '../utils/constants';
 import DeviceForm from '../components/DeviceForm';
-import { normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
+import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
 
 const cardStyle = {
   background: 'var(--panel-bg)',
@@ -125,6 +125,8 @@ const Devices = () => {
   const [equipmentQuickSearch, setEquipmentQuickSearch] = useState('');
   const [selectedQuickType, setSelectedQuickType] = useState('');
   const pageSize = 15;
+  const showQuickLookup = false;
+  const showConsultationSummary = false;
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -187,6 +189,7 @@ const Devices = () => {
   const derivedStats = useMemo(() => ({
     active: allDevices.filter((item) => item.status === 'Ativo').length,
     inactive: allDevices.filter((item) => item.status === 'Inativo').length,
+    maintenance: allDevices.filter((item) => isMaintenanceStatus(item.status)).length,
     assigned: allDevices.filter((item) => item.tipo === 'Laptop' && String(item.pessoa_atribuida || '').trim()).length,
     sectorsVisible: new Set(allDevices.map((item) => normalizeSectorName(item.setor))).size,
   }), [allDevices]);
@@ -270,7 +273,7 @@ const Devices = () => {
           <div style={{ maxWidth: 720 }}>
             <div style={{ fontSize: 12, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 30 : 40, lineHeight: 1.04, letterSpacing: '-0.03em' }}>Controle operacional de equipamentos</h1>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15, maxWidth: 620 }}>Consulta, filtros e localizacao rapida da base para facilitar a operacao do dia a dia sem alterar o fluxo que voce ja usa.</p>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15, maxWidth: 620 }}>Consulta da base com filtros por setor, tipo e status para encontrar rapidamente a informacao que precisa.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <button onClick={() => downloadCsv(allDevices)} style={{ ...buttonBase, background: '#ffffff', color: 'var(--text-primary)', border: '1px solid rgba(148,163,184,0.22)', boxShadow: 'var(--shadow-sm)' }}>Exportar CSV</button>
@@ -282,11 +285,11 @@ const Devices = () => {
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         <KpiCard label="Base filtrada" value={pagination.total} helper="volume atual da consulta" />
         <KpiCard label="Ativos" value={derivedStats.active} helper="itens prontos para operacao" />
+        <KpiCard label="Em manutencao" value={derivedStats.maintenance} helper="itens filtrados nessa condicao" />
         <KpiCard label="Inativos" value={derivedStats.inactive} helper="equipamentos fora de operacao" />
-        <KpiCard label="Laptops atribuidos" value={derivedStats.assigned} helper="rastreabilidade por responsavel" />
       </section>
 
-      <section style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 20 }}>
+      {showQuickLookup && <section style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 20 }}>
         <div style={{ ...cardStyle, padding: 22 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
             <div>
@@ -355,7 +358,7 @@ const Devices = () => {
             </div>
           ) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum equipamento encontrado com esse filtro.</div>}
         </div>
-      </section>
+      </section>}
 
       <section style={{ ...cardStyle, padding: 22 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
@@ -422,7 +425,7 @@ const Devices = () => {
         )}
       </section>
 
-      <section style={{ ...cardStyle, padding: 22 }}>
+      {showConsultationSummary && <section style={{ ...cardStyle, padding: 22 }}>
         <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Resumo da consulta</h2>
         <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Indicadores diretos da base atualmente filtrada.</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
@@ -431,7 +434,7 @@ const Devices = () => {
           <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: labelAccentColor, fontWeight: 700, textTransform: 'uppercase' }}>Setores visiveis</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{derivedStats.sectorsVisible}</div></div>
           <div style={{ padding: 16, borderRadius: 16, background: 'var(--panel-soft)', border: '1px solid rgba(148,163,184,0.14)' }}><div style={{ fontSize: 12, color: labelAccentColor, fontWeight: 700, textTransform: 'uppercase' }}>Itens nesta pagina</div><div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{devices.length}</div></div>
         </div>
-      </section>
+      </section>}
 
       {showForm && <DeviceForm device={editingDevice} onClose={handleFormClose} onSuccess={handleFormSuccess} />}
       {deletingId && (
