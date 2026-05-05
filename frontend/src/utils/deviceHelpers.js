@@ -6,6 +6,26 @@ export const normalizeSectorName = (sector) =>
 export const isMaintenanceStatus = (status = '') =>
   String(status).toLowerCase().includes('manuten');
 
+export const normalizeSearchText = (value = '') =>
+  String(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+export const isAwaitingLeaderApproval = (device = {}) => {
+  const searchableText = normalizeSearchText(
+    [device.ticket, device.observacoes].filter(Boolean).join(' ')
+  );
+
+  return (
+    searchableText.includes('aguardando aprovacao') ||
+    searchableText.includes('pendente aprovacao') ||
+    searchableText.includes('aprovacao lider') ||
+    searchableText.includes('aprovar lider') ||
+    searchableText.includes('site lider')
+  );
+};
+
 export const sortDevices = (items, sortBy) => {
   const sorted = [...items];
 

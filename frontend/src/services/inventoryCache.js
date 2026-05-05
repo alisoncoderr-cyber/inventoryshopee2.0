@@ -1,5 +1,5 @@
 import { fetchDevices } from './api';
-import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
+import { isAwaitingLeaderApproval, isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
 
 const CACHE_TTL_MS = 90 * 1000;
 
@@ -47,6 +47,7 @@ export const buildInventoryStats = (devices = []) => {
   const comTicket = devices.filter((device) =>
     String(device.ticket || '').trim()
   ).length;
+  const aguardandoAprovacao = devices.filter(isAwaitingLeaderApproval).length;
   const laptopsAtribuidos = devices.filter(
     (device) =>
       device.tipo === 'Laptop' && String(device.pessoa_atribuida || '').trim()
@@ -70,6 +71,7 @@ export const buildInventoryStats = (devices = []) => {
     em_manutencao: emManutencao,
     inativos,
     com_ticket: comTicket,
+    aguardando_aprovacao: aguardandoAprovacao,
     laptops_atribuidos: laptopsAtribuidos,
     percentual_ativos: devices.length ? Math.round((ativos / devices.length) * 100) : 0,
     por_setor: porSetor,

@@ -9,10 +9,11 @@ const cardStyle = {
   backdropFilter: 'blur(10px)',
 };
 
-const StatCard = ({ title, value, helper, accent, icon }) => (
-  <div style={{ ...cardStyle, padding: 24, position: 'relative', overflow: 'hidden', minHeight: 150 }}>
-    <div style={{ position: 'absolute', inset: 'auto -34px -34px auto', width: 120, height: 120, borderRadius: '50%', background: `${accent}14` }} />
-    <div style={{ width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${accent}14`, color: accent, fontWeight: 800, marginBottom: 22 }}>{icon}</div>
+const StatCard = ({ title, value, helper, icon }) => (
+  <div style={{ ...cardStyle, padding: 24, minHeight: 150 }}>
+    <div style={{ width: 46, height: 46, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', border: '1px solid rgba(148,163,184,0.18)', marginBottom: 22 }}>
+      <img src={icon} alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+    </div>
     <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{value}</div>
     <div style={{ marginTop: 10, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
     <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>{helper}</div>
@@ -73,14 +74,12 @@ const Dashboard = () => {
         style={{
           ...cardStyle,
           padding: isMobile ? 24 : 32,
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(239,246,255,0.96) 48%, rgba(219,234,254,0.96) 100%)',
+          background: '#ffffff',
           color: 'var(--text-primary)',
           overflow: 'hidden',
           position: 'relative',
         }}
       >
-        <div style={{ position: 'absolute', right: -60, top: -60, width: 240, height: 240, borderRadius: '50%', background: 'rgba(59,130,246,0.12)' }} />
-        <div style={{ position: 'absolute', left: '42%', bottom: -70, width: 180, height: 180, borderRadius: '50%', background: 'rgba(29,78,216,0.08)' }} />
         <div style={{ position: 'relative', maxWidth: 620 }}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--brand)' }}>Resumo</div>
           <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 28 : 38, lineHeight: 1.05, letterSpacing: '-0.03em' }}>Inventario em numeros</h1>
@@ -89,10 +88,10 @@ const Dashboard = () => {
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
-        <StatCard title="Base total" value={stats.total} helper="todos os itens controlados" accent="#1d4ed8" icon="INV" />
-        <StatCard title="Equipamentos ativos" value={stats.ativos} helper="itens prontos para operacao" accent="#0f766e" icon="OK" />
-        <StatCard title="Em manutencao" value={stats.em_manutencao} helper={`${maintenanceRate} da base exige atencao`} accent="#d97706" icon="MT" />
-        <StatCard title="Com ticket" value={stats.com_ticket} helper="equipamentos vinculados a chamados" accent="#475569" icon="TK" />
+        <StatCard title="Base total" value={stats.total} helper="todos os itens controlados" icon="/icons/inventory.png" />
+        <StatCard title="Equipamentos ativos" value={stats.ativos} helper="itens prontos para operacao" icon="/icons/active.png" />
+        <StatCard title="Em manutencao" value={stats.em_manutencao} helper={`${maintenanceRate} da base exige atencao`} icon="/icons/maintenance.png" />
+        <StatCard title="Aguardando aprovacao" value={stats.aguardando_aprovacao} helper="tickets pendentes para o lider aprovar" icon="/icons/approval.png" />
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 20 }}>
