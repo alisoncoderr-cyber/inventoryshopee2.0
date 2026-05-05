@@ -31,6 +31,68 @@ const SummaryList = ({ data, emptyText }) => (
   </div>
 );
 
+const SUMMARY_PAGE_SIZE = 8;
+
+const pageButtonStyle = {
+  width: 34,
+  height: 34,
+  borderRadius: 10,
+  border: '1px solid rgba(148,163,184,0.22)',
+  background: '#ffffff',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  fontSize: 13,
+  fontWeight: 800,
+  fontFamily: 'inherit',
+};
+
+const PaginatedSummaryList = ({ data, emptyText, page, onPageChange }) => {
+  const totalPages = Math.max(1, Math.ceil(data.length / SUMMARY_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * SUMMARY_PAGE_SIZE;
+  const visibleData = data.slice(startIndex, startIndex + SUMMARY_PAGE_SIZE);
+
+  useEffect(() => {
+    if (page !== safePage) onPageChange(safePage);
+  }, [onPageChange, page, safePage]);
+
+  return (
+    <div style={{ display: 'grid', gap: 14 }}>
+      <SummaryList data={visibleData} emptyText={emptyText} />
+      {data.length > SUMMARY_PAGE_SIZE && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            {startIndex + 1}-{Math.min(startIndex + SUMMARY_PAGE_SIZE, data.length)} de {data.length}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {Array.from({ length: totalPages }, (_, index) => {
+              const pageNumber = index + 1;
+              const active = pageNumber === safePage;
+
+              return (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  onClick={() => onPageChange(pageNumber)}
+                  style={{
+                    ...pageButtonStyle,
+                    background: active ? 'linear-gradient(135deg, #1d4ed8, #3b82f6)' : '#ffffff',
+                    color: active ? '#ffffff' : 'var(--text-secondary)',
+                    borderColor: active ? 'transparent' : 'rgba(148,163,184,0.22)',
+                    boxShadow: active ? '0 10px 22px rgba(29,78,216,0.16)' : 'none',
+                  }}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const looksLikeSerial = (value = '') => /^s?\d{8,}$/i.test(String(value).trim());
 
 const getEquipmentDisplayName = (device = {}) => {
@@ -49,6 +111,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
+  const [setorPage, setSetorPage] = useState(1);
+  const [tipoPage, setTipoPage] = useState(1);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -136,7 +200,7 @@ const Dashboard = () => {
             <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Quantidade por setor</h3>
             <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Lista simples para entender onde os equipamentos estao alocados.</p>
           </div>
-          <SummaryList data={setorData} emptyText="Nenhum dado por setor disponivel." />
+          <PaginatedSummaryList data={setorData} emptyText="Nenhum dado por setor disponivel." page={setorPage} onPageChange={setSetorPage} />
         </div>
 
         <div style={{ ...cardStyle, padding: 24 }}>
@@ -144,7 +208,7 @@ const Dashboard = () => {
             <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Quantidade por tipo</h3>
             <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Contagem direta por tipo de equipamento.</p>
           </div>
-          <SummaryList data={tipoData} emptyText="Nenhum dado por tipo disponivel." />
+          <PaginatedSummaryList data={tipoData} emptyText="Nenhum dado por tipo disponivel." page={tipoPage} onPageChange={setTipoPage} />
         </div>
       </section>
 
