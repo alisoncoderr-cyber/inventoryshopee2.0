@@ -128,7 +128,7 @@ function App() {
         display: 'flex',
         minHeight: '100vh',
         background: 'transparent',
-        fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
+        fontFamily: '"Aptos", "Segoe UI", Arial, system-ui, sans-serif',
         color: 'var(--text-primary)',
       }}
     >
@@ -148,7 +148,7 @@ function App() {
       <aside
         style={{
           width: sidebarOpen ? 248 : 72,
-          background: 'linear-gradient(180deg, rgba(248,250,252,0.98) 0%, rgba(255,255,255,0.96) 100%)',
+          background: 'linear-gradient(180deg, rgba(248,250,252,0.98) 0%, rgba(255,255,255,0.97) 100%)',
           color: 'var(--text-primary)',
           display: 'flex',
           flexDirection: 'column',
@@ -178,14 +178,14 @@ function App() {
             style={{
               width: 40,
               height: 40,
-              borderRadius: 14,
-              background: 'linear-gradient(135deg, #1d4ed8, #3b82f6 60%, #bfdbfe)',
+              borderRadius: 10,
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
               overflow: 'hidden',
-              boxShadow: '0 12px 24px rgba(29, 78, 216, 0.18)',
+              boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
             }}
           >
             <img src="/shopee-icon.webp" alt="Shopee" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -226,7 +226,7 @@ function App() {
               style={{
                 width: '100%',
                 border: 'none',
-                background: activePage === item.id ? 'linear-gradient(90deg, rgba(219,234,254,0.96), rgba(239,246,255,0.75))' : 'transparent',
+                background: activePage === item.id ? 'rgba(31, 58, 95, 0.08)' : 'transparent',
                 cursor: 'pointer',
                 textAlign: 'left',
                 fontFamily: 'inherit',
@@ -237,7 +237,7 @@ function App() {
                 marginBottom: 6,
                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
                 color: activePage === item.id ? 'var(--brand-ink)' : 'var(--text-secondary)',
-                borderRadius: 14,
+                borderRadius: 9,
                 transition: 'all 0.15s',
                 fontSize: 14,
                 fontWeight: activePage === item.id ? 700 : 500,

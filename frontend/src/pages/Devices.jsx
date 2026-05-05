@@ -7,27 +7,27 @@ import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/
 
 const cardStyle = {
   background: 'var(--panel-bg)',
-  borderRadius: 24,
+  borderRadius: 12,
   border: '1px solid var(--panel-border)',
   boxShadow: 'var(--shadow-md)',
-  backdropFilter: 'blur(10px)',
+  backdropFilter: 'blur(8px)',
 };
-const labelAccentColor = '#d97706';
+const labelAccentColor = '#475467';
 
 const inputStyle = {
-  padding: '12px 14px',
-  borderRadius: 14,
-  border: '1px solid rgba(148,163,184,0.24)',
-  fontSize: 14,
+  padding: '10px 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(100,116,139,0.24)',
+  fontSize: 13,
   fontFamily: 'inherit',
-  background: 'rgba(255,255,255,0.9)',
+  background: '#ffffff',
   color: 'var(--text-primary)',
-  boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset',
+  boxShadow: 'none',
 };
 
 const buttonBase = {
   border: 'none',
-  borderRadius: 14,
+  borderRadius: 8,
   cursor: 'pointer',
   fontSize: 13,
   fontWeight: 700,
@@ -84,16 +84,16 @@ const downloadCsv = (rows) => {
 };
 
 const KpiCard = ({ label, value, helper }) => (
-  <div style={{ ...cardStyle, padding: 22 }}>
-    <div style={{ fontSize: 11, fontWeight: 800, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div>
-    <div style={{ marginTop: 12, fontSize: 30, fontWeight: 800, color: 'var(--text-primary)' }}>{value}</div>
+  <div style={{ ...cardStyle, padding: 20 }}>
+    <div style={{ fontSize: 11, fontWeight: 800, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
+    <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{value}</div>
     <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>{helper}</div>
   </div>
 );
 
 const StatusBadge = ({ status }) => {
   const colors = STATUS_COLORS[status] || { bg: '#f8fafc', text: '#334155', border: 'rgba(148,163,184,0.2)' };
-  return <span style={{ padding: '5px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, whiteSpace: 'nowrap' }}>{status}</span>;
+  return <span style={{ padding: '4px 9px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, whiteSpace: 'nowrap' }}>{status}</span>;
 };
 
 const FilterChip = ({ active, label, count, onClick }) => (
@@ -268,16 +268,16 @@ const Devices = () => {
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
-      <section style={{ ...cardStyle, padding: isMobile ? 24 : 30, background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.96) 48%, rgba(219,234,254,0.88) 100%)', color: 'var(--text-primary)' }}>
+      <section style={{ ...cardStyle, padding: isMobile ? 22 : 26, background: '#ffffff', color: 'var(--text-primary)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ fontSize: 12, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Equipamentos</div>
-            <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 30 : 40, lineHeight: 1.04, letterSpacing: '-0.03em' }}>Controle operacional de equipamentos</h1>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15, maxWidth: 620 }}>Consulta da base com filtros por setor, tipo e status para encontrar rapidamente a informacao que precisa.</p>
+            <div style={{ fontSize: 12, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.04em', fontWeight: 800 }}>Equipamentos</div>
+            <h1 style={{ margin: '10px 0 8px', fontSize: isMobile ? 26 : 32, lineHeight: 1.1, letterSpacing: 0 }}>Controle operacional de equipamentos</h1>
+            <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.55, fontSize: 14, maxWidth: 620 }}>Consulta da base com filtros por setor, tipo e status para encontrar rapidamente a informacao que precisa.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <button onClick={() => downloadCsv(allDevices)} style={{ ...buttonBase, background: '#ffffff', color: 'var(--text-primary)', border: '1px solid rgba(148,163,184,0.22)', boxShadow: 'var(--shadow-sm)' }}>Exportar CSV</button>
-            <button onClick={() => { setEditingDevice(null); setShowForm(true); }} style={{ ...buttonBase, background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)', color: '#ffffff', boxShadow: '0 14px 30px rgba(29,78,216,0.18)' }}>Novo equipamento</button>
+            <button onClick={() => downloadCsv(allDevices)} style={{ ...buttonBase, background: '#ffffff', color: 'var(--text-primary)', border: '1px solid rgba(100,116,139,0.24)', boxShadow: 'none' }}>Exportar CSV</button>
+            <button onClick={() => { setEditingDevice(null); setShowForm(true); }} style={{ ...buttonBase, background: 'var(--brand)', color: '#ffffff', boxShadow: 'none' }}>Novo equipamento</button>
           </div>
         </div>
       </section>
@@ -360,13 +360,13 @@ const Devices = () => {
         </div>
       </section>}
 
-      <section style={{ ...cardStyle, padding: 22 }}>
+      <section style={{ ...cardStyle, padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Central de equipamentos</h2>
             <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Pesquisa mais completa, filtros e tabela pronta para a operacao do dia a dia.</p>
           </div>
-          <div style={{ fontSize: 13, color: labelAccentColor, fontWeight: 700 }}>{pagination.total} registro(s) encontrado(s)</div>
+          <div style={{ fontSize: 13, color: 'var(--brand)', fontWeight: 800 }}>{pagination.total} registro(s) encontrado(s)</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
@@ -378,7 +378,7 @@ const Devices = () => {
         </div>
 
         {(search || filterType !== 'all' || filterStatus !== 'all' || filterSector !== 'all') && (
-          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center', padding: 14, borderRadius: 16, background: '#f8fafc', border: '1px solid rgba(148,163,184,0.18)' }}>
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center', padding: 14, borderRadius: 10, background: '#f8fafc', border: '1px solid rgba(100,116,139,0.18)' }}>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Filtros ativos para refinar a base e localizar mais rapido.</div>
             <button onClick={() => { setSearch(''); setFilterType('all'); setFilterStatus('all'); setFilterSector('all'); setSelectedSectorPreview(''); setSortBy('recent'); setCurrentPage(1); }} style={{ ...buttonBase, background: '#ffffff', color: 'var(--text-primary)', border: '1px solid rgba(148,163,184,0.22)' }}>Limpar filtros</button>
           </div>
@@ -386,25 +386,25 @@ const Devices = () => {
 
         {error && <div style={{ marginBottom: 16, padding: 14, borderRadius: 14, background: 'var(--danger-soft)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13 }}>Erro: {error}</div>}
 
-        <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.18)' }}>
+        <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(100,116,139,0.18)' }}>
           {loading ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Carregando base operacional...</div> : devices.length === 0 ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento encontrado com os filtros atuais.</div> : (
             <div style={{ overflowX: 'auto', background: '#ffffff' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
-                <thead><tr style={{ background: '#f8fafc' }}>{['Tipo de Equipamento', 'Categoria', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, color: labelAccentColor, textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid rgba(148,163,184,0.18)' }}>{header}</th>)}</tr></thead>
+                <thead><tr style={{ background: '#f3f6fa' }}>{['Tipo de Equipamento', 'Categoria', 'Marca/Modelo', 'Serie', 'Setor', 'Status', 'Ticket', 'Responsavel', 'Acoes'].map((header) => <th key={header} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, color: '#475467', textTransform: 'uppercase', letterSpacing: '.04em', borderBottom: '1px solid rgba(100,116,139,0.18)' }}>{header}</th>)}</tr></thead>
                 <tbody>
                   {devices.map((device, index) => (
-                    <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff', borderTop: '1px solid rgba(148,163,184,0.12)' }}>
-                      <td style={{ padding: '14px 16px' }}><div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div><div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>Cadastro: {device.data_cadastro || '-'}</div></td>
-                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{(TYPE_ICONS[device.tipo] || 'ITEM')} {device.tipo}</td>
-                      <td style={{ padding: '14px 16px' }}><div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{device.marca}</div><div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>{device.modelo}</div></td>
-                      <td style={{ padding: '14px 16px', fontSize: 12, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{device.numero_serie}</td>
-                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{device.setor}</td>
-                      <td style={{ padding: '14px 16px' }}><StatusBadge status={device.status} /></td>
-                      <td style={{ padding: '14px 16px', fontSize: 12, color: device.ticket ? '#b45309' : '#94a3b8', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Sem ticket'}</td>
-                      <td style={{ padding: '14px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>{device.pessoa_atribuida || '-'}</td>
-                      <td style={{ padding: '14px 16px' }}><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <button onClick={() => { setEditingDevice(device); setShowForm(true); }} style={{ ...buttonBase, background: '#eff6ff', color: 'var(--brand)', padding: '8px 12px', border: '1px solid rgba(59,130,246,0.16)' }}>Editar</button>
-                        <button onClick={() => setDeletingId(device.id)} style={{ ...buttonBase, background: '#fef2f2', color: '#b91c1c', padding: '8px 12px', border: '1px solid rgba(239,68,68,0.16)' }}>Excluir</button>
+                    <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fafbfc', borderTop: '1px solid rgba(100,116,139,0.12)' }}>
+                      <td style={{ padding: '13px 14px' }}><div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div><div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)' }}>Cadastro: {device.data_cadastro || '-'}</div></td>
+                      <td style={{ padding: '13px 14px', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{(TYPE_ICONS[device.tipo] || 'ITEM')} {device.tipo}</td>
+                      <td style={{ padding: '13px 14px' }}><div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{device.marca}</div><div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)' }}>{device.modelo}</div></td>
+                      <td style={{ padding: '13px 14px', fontSize: 12, color: '#111827', fontFamily: '"Cascadia Mono", Consolas, monospace' }}>{device.numero_serie}</td>
+                      <td style={{ padding: '13px 14px', fontSize: 13, color: 'var(--text-secondary)' }}>{device.setor}</td>
+                      <td style={{ padding: '13px 14px' }}><StatusBadge status={device.status} /></td>
+                      <td style={{ padding: '13px 14px', fontSize: 12, color: device.ticket ? '#92400e' : '#98a2b3', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Sem ticket'}</td>
+                      <td style={{ padding: '13px 14px', fontSize: 12, color: 'var(--text-secondary)' }}>{device.pessoa_atribuida || '-'}</td>
+                      <td style={{ padding: '13px 14px' }}><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button onClick={() => { setEditingDevice(device); setShowForm(true); }} style={{ ...buttonBase, background: '#eef4fb', color: 'var(--brand)', padding: '7px 11px', border: '1px solid rgba(31,58,95,0.18)' }}>Editar</button>
+                        <button onClick={() => setDeletingId(device.id)} style={{ ...buttonBase, background: '#fff5f5', color: '#b42318', padding: '7px 11px', border: '1px solid rgba(180,35,24,0.18)' }}>Excluir</button>
                       </div></td>
                     </tr>
                   ))}
@@ -419,7 +419,7 @@ const Devices = () => {
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Pagina {pagination.page} de {pagination.totalPages}</div>
             <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : 'auto' }}>
               <button disabled={currentPage <= 1} onClick={() => setCurrentPage((page) => page - 1)} style={{ ...buttonBase, background: '#ffffff', color: 'var(--text-primary)', border: '1px solid rgba(148,163,184,0.22)', opacity: currentPage <= 1 ? .45 : 1, flex: isMobile ? 1 : 'initial' }}>Anterior</button>
-              <button disabled={currentPage >= pagination.totalPages} onClick={() => setCurrentPage((page) => page + 1)} style={{ ...buttonBase, background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)', color: '#ffffff', opacity: currentPage >= pagination.totalPages ? .45 : 1, flex: isMobile ? 1 : 'initial' }}>Proxima</button>
+              <button disabled={currentPage >= pagination.totalPages} onClick={() => setCurrentPage((page) => page + 1)} style={{ ...buttonBase, background: 'var(--brand)', color: '#ffffff', opacity: currentPage >= pagination.totalPages ? .45 : 1, flex: isMobile ? 1 : 'initial' }}>Proxima</button>
             </div>
           </div>
         )}
