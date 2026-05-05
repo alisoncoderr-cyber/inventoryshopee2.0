@@ -65,11 +65,19 @@ const SectorImpactCard = ({ sector, count, withTicket }) => (
   </div>
 );
 
+const DetailItem = ({ label, value, wide = false }) => (
+  <div style={{ gridColumn: wide ? '1 / -1' : 'auto', padding: 12, borderRadius: 12, background: '#f8fafc', border: '1px solid rgba(148,163,184,0.14)' }}>
+    <div style={{ fontSize: 11, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.06em' }}>{label}</div>
+    <div style={{ marginTop: 5, fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.45, wordBreak: 'break-word' }}>{value || '-'}</div>
+  </div>
+);
+
 const Maintenance = () => {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [ticketDevice, setTicketDevice] = useState(null);
   const [ticketForm, setTicketForm] = useState({ ticket: '', observacoes: '' });
   const [ticketSaving, setTicketSaving] = useState(false);
@@ -102,6 +110,14 @@ const Maintenance = () => {
     setTicketDevice(device);
     setTicketForm({ ticket: device.ticket || '', observacoes: device.observacoes || '' });
     setTicketError('');
+  };
+
+  const openDeviceDetails = (device) => {
+    setSelectedDevice(device);
+  };
+
+  const closeDeviceDetails = () => {
+    setSelectedDevice(null);
   };
 
   const closeTicketModal = () => {
@@ -192,19 +208,22 @@ const Maintenance = () => {
           <div style={{ borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.18)' }}>
             {maintenanceDevices.length > 0 ? (
               <div style={{ overflowX: 'auto', background: '#ffffff' }}>
-                <table style={{ width: '100%', minWidth: 780, borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', minWidth: 900, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      {['Equipamento', 'Setor', 'Ticket', 'Responsavel', 'Cadastro', 'Status'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
+                      {['Equipamento', 'Serie', 'Setor', 'Ticket', 'Responsavel', 'Cadastro', 'Status'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
                     </tr>
                   </thead>
                   <tbody>
                     {maintenanceDevices.map((device, index) => (
                       <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fbfdff' }}>
                         <td style={tableCellStyle}>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{getEquipmentDisplayName(device)}</div>
+                          <button type="button" onClick={() => openDeviceDetails(device)} style={{ display: 'block', padding: 0, border: 0, background: 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textDecoration: 'underline', textDecorationColor: 'rgba(180,83,9,0.24)', textUnderlineOffset: 3 }}>{getEquipmentDisplayName(device)}</span>
+                          </button>
                           <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{device.marca || device.modelo ? [device.marca, device.modelo].filter(Boolean).join(' ') : 'Sem detalhes'}</div>
                         </td>
+                        <td style={{ ...tableCellStyle, fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{device.numero_serie || '-'}</td>
                         <td style={tableCellStyle}>{normalizeSectorName(device.setor)}</td>
                         <td style={{ ...tableCellStyle, color: device.ticket ? '#b45309' : '#64748b', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Nao informado'}</td>
                         <td style={tableCellStyle}>{device.pessoa_atribuida || '-'}</td>
@@ -245,6 +264,35 @@ const Maintenance = () => {
           </div>
         </div>
       </section>
+
+      {selectedDevice && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.36)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+          onClick={(event) => event.target === event.currentTarget && closeDeviceDetails()}
+        >
+          <div style={{ ...cardStyle, width: '100%', maxWidth: 640, padding: 24, background: '#ffffff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 20, color: 'var(--text-primary)' }}>{getEquipmentDisplayName(selectedDevice)}</h3>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>Informacoes do dispositivo em manutencao</p>
+              </div>
+              <button type="button" onClick={closeDeviceDetails} style={{ border: '1px solid rgba(148,163,184,0.18)', background: '#f8fafc', color: 'var(--text-secondary)', borderRadius: 12, width: 36, height: 36, cursor: 'pointer', fontSize: 16 }}>x</button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+              <DetailItem label="Numero de serie" value={selectedDevice.numero_serie} />
+              <DetailItem label="Setor" value={normalizeSectorName(selectedDevice.setor)} />
+              <DetailItem label="Tipo" value={selectedDevice.tipo} />
+              <DetailItem label="Marca / modelo" value={[selectedDevice.marca, selectedDevice.modelo].filter(Boolean).join(' ')} />
+              <DetailItem label="Ticket" value={selectedDevice.ticket || 'Nao informado'} />
+              <DetailItem label="Responsavel" value={selectedDevice.pessoa_atribuida} />
+              <DetailItem label="Cadastro" value={selectedDevice.data_cadastro} />
+              <DetailItem label="Status" value={selectedDevice.status} />
+              <DetailItem label="Defeito / observacao" value={selectedDevice.observacoes || 'Sem observacao'} wide />
+            </div>
+          </div>
+        </div>
+      )}
 
       {ticketDevice && (
         <div
