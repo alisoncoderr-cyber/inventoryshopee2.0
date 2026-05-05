@@ -10,6 +10,19 @@ let inventoryCachePromise = null;
 const isCacheFresh = () =>
   inventoryCache && Date.now() - inventoryCacheTimestamp < CACHE_TTL_MS;
 
+const fetchAllDevices = async () => {
+  const firstPage = await fetchDevices({ page: 1, limit: 10000 });
+  const devices = [...(firstPage.data || [])];
+  const totalPages = firstPage.pagination?.totalPages || 1;
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const result = await fetchDevices({ page, limit: 10000 });
+    devices.push(...(result.data || []));
+  }
+
+  return devices;
+};
+
 export const getInventoryDevices = async ({ force = false } = {}) => {
   if (!force && isCacheFresh()) {
     return inventoryCache;
@@ -19,9 +32,9 @@ export const getInventoryDevices = async ({ force = false } = {}) => {
     return inventoryCachePromise;
   }
 
-  inventoryCachePromise = fetchDevices({ page: 1, limit: 1000 })
-    .then((result) => {
-      inventoryCache = result.data || [];
+  inventoryCachePromise = fetchAllDevices()
+    .then((devices) => {
+      inventoryCache = devices;
       inventoryCacheTimestamp = Date.now();
       return inventoryCache;
     })

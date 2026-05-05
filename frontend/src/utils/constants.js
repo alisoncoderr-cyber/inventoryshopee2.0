@@ -21,6 +21,11 @@ export const EQUIPMENT_TYPES = [
   'Berco de PDA',
   'Tablet',
   'Impressora A4',
+  'Bandoleira',
+  'Coldre PDA',
+  'Radio comunicador',
+  'Teclado',
+  'Impressora',
 ];
 
 export const STATUS_OPTIONS = ['Ativo', 'Em manutencao', 'Inativo'];
@@ -35,6 +40,15 @@ export const SECTORS = [
   'COP',
   'Security',
   'Fullfilment',
+  'FIELD',
+  'HSE',
+  'OPS',
+  'Controle buffer',
+  'Auditoria',
+  'Tratativas',
+  'Returns',
+  'RH',
+  'PTS',
 ];
 
 const maintenanceTone = { bg: '#fef3c7', text: '#b45309', border: 'rgba(245, 158, 11, 0.24)' };
@@ -75,6 +89,11 @@ export const TYPE_ICONS = {
   'Berco de PDA': 'CRD',
   Tablet: 'TAB',
   'Impressora A4': 'A4',
+  Bandoleira: 'BND',
+  'Coldre PDA': 'CLD',
+  'Radio comunicador': 'RAD',
+  Teclado: 'KEY',
+  Impressora: 'PRN',
 };
 
 export const SECTOR_ALIASES = {
@@ -84,10 +103,14 @@ export const SECTOR_ALIASES = {
   'OperaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes': 'Operacao',
   'OperaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes': 'Operacao',
   Operacoes: 'Operacao',
+  Operacao: 'Operacao',
   'OperaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'Operacao',
   'OperaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'Operacao',
   Administracao: 'ADM',
   'AdministraÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o': 'ADM',
   'AdministraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o': 'ADM',
   Fulfillment: 'Fullfilment',
+  FULL: 'Fullfilment',
+  'Expedição': 'Expedicao',
+  'Operação': 'Operacao',
 };
