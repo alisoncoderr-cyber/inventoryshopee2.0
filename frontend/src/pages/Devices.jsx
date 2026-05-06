@@ -394,7 +394,7 @@ const Devices = () => {
                 <tbody>
                   {devices.map((device, index) => (
                     <tr key={device.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#fafbfc', borderTop: '1px solid rgba(100,116,139,0.12)' }}>
-                      <td style={{ padding: '15px 14px' }}><div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div><div style={{ marginTop: 5, fontSize: 12, color: 'var(--text-muted)' }}>Cadastro: {device.data_cadastro || '-'}</div></td>
+                      <td style={{ padding: '15px 14px' }}><div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div></td>
                       <td style={{ padding: '15px 14px', fontSize: 14, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{(TYPE_ICONS[device.tipo] || 'ITEM')} {device.tipo}</td>
                       <td style={{ padding: '15px 14px' }}><div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{device.marca}</div><div style={{ marginTop: 5, fontSize: 12, color: 'var(--text-muted)' }}>{device.modelo}</div></td>
                       <td style={{ padding: '15px 14px', fontSize: 13, color: '#111827', fontFamily: '"Cascadia Mono", Consolas, monospace' }}>{device.numero_serie}</td>
