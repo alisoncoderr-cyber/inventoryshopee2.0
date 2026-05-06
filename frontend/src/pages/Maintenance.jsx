@@ -340,6 +340,7 @@ const Maintenance = () => {
               <div>
                 <h3 style={{ margin: 0, fontSize: 20, color: 'var(--text-primary)' }}>Adicionar ticket</h3>
                 <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{getEquipmentDisplayName(ticketDevice)} - {normalizeSectorName(ticketDevice.setor)}</p>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700 }}>Serie: {ticketDevice.numero_serie || 'Nao informado'}</p>
               </div>
               <button type="button" onClick={closeTicketModal} style={{ border: '1px solid rgba(148,163,184,0.18)', background: '#f8fafc', color: 'var(--text-secondary)', borderRadius: 12, width: 36, height: 36, cursor: 'pointer', fontSize: 16 }}>x</button>
             </div>
