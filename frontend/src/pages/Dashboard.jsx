@@ -212,24 +212,6 @@ const Dashboard = () => {
         </div>
       </section>
 
-      <section style={{ ...cardStyle, padding: 24 }}>
-        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Ultimos cadastros</h3>
-        <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Itens adicionados mais recentemente na base.</p>
-        <div style={{ display: 'grid', gap: 10 }}>
-          {(stats.recentes || []).length > 0 ? stats.recentes.map((device) => (
-            <div key={device.id} style={{ padding: '16px 18px', borderRadius: 18, border: '1px solid rgba(148,163,184,0.14)', background: 'var(--panel-soft)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{device.nome_dispositivo}</div>
-                  <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-muted)' }}>{device.tipo} - {device.setor || 'Sem setor'}</div>
-                </div>
-                <span style={{ padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: device.status === 'Ativo' ? '#dcfce7' : device.status === 'Inativo' ? '#fee2e2' : '#fef3c7', color: device.status === 'Ativo' ? '#166534' : device.status === 'Inativo' ? '#b91c1c' : '#b45309', border: '1px solid rgba(148,163,184,0.1)' }}>{device.status}</span>
-              </div>
-              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-secondary)' }}>Cadastro: {device.data_cadastro || '-'}</div>
-            </div>
-          )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum cadastro recente encontrado.</div>}
-        </div>
-      </section>
     </div>
   );
 };
