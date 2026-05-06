@@ -16,7 +16,7 @@ const tableHeaderStyle = {
   padding: '13px 14px',
   textAlign: 'left',
   fontSize: 11,
-  color: '#b45309',
+  color: '#334155',
   textTransform: 'uppercase',
   letterSpacing: '.06em',
   borderBottom: '1px solid rgba(148,163,184,0.18)',
@@ -228,15 +228,15 @@ const Maintenance = () => {
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
-      <section style={{ ...cardStyle, padding: isMobile ? 24 : 30, background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(255,247,237,0.96) 50%, rgba(254,243,199,0.86) 100%)', color: 'var(--text-primary)' }}>
+      <section style={{ ...cardStyle, padding: isMobile ? 24 : 30, background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 52%, rgba(241,245,249,0.95) 100%)', color: 'var(--text-primary)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ fontSize: 12, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Manutencao</div>
+            <div style={{ fontSize: 12, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Manutencao</div>
             <h1 style={{ margin: '12px 0 10px', fontSize: isMobile ? 30 : 40, lineHeight: 1.04, letterSpacing: '-0.03em' }}>Acompanhamento de equipamentos em manutencao</h1>
             <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15, maxWidth: 620 }}>Painel dedicado para fila de manutencao, tickets, setores impactados e itens que exigem acompanhamento mais proximo.</p>
           </div>
-          <div style={{ minWidth: isMobile ? '100%' : 280, maxWidth: 320, padding: 20, borderRadius: 20, background: 'rgba(255,255,255,0.74)', border: '1px solid rgba(245,158,11,0.18)' }}>
-            <div style={{ fontSize: 11, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Setor mais impactado</div>
+          <div style={{ minWidth: isMobile ? '100%' : 280, maxWidth: 320, padding: 20, borderRadius: 20, background: 'rgba(255,255,255,0.78)', border: '1px solid rgba(100,116,139,0.18)' }}>
+            <div style={{ fontSize: 11, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>Setor mais impactado</div>
             <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{topSector ? topSector.sector : 'Sem dados'}</div>
             <div style={{ marginTop: 4, color: 'var(--text-secondary)', fontSize: 13 }}>{topSector ? `${topSector.count} equipamento(s) em manutencao` : 'Nenhum equipamento em manutencao'}</div>
           </div>
@@ -274,7 +274,7 @@ const Maintenance = () => {
                         </td>
                         <td style={{ ...tableCellStyle, fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{device.numero_serie || '-'}</td>
                         <td style={tableCellStyle}>{normalizeSectorName(device.setor)}</td>
-                        <td style={{ ...tableCellStyle, color: device.ticket ? '#b45309' : '#64748b', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Nao informado'}</td>
+                        <td style={{ ...tableCellStyle, color: device.ticket ? 'var(--brand)' : '#64748b', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Nao informado'}</td>
                         <td style={tableCellStyle}>{device.pessoa_atribuida || '-'}</td>
                         <td style={tableCellStyle}>{device.data_cadastro || '-'}</td>
                         <td style={tableCellStyle}><StatusBadge status={device.status} /></td>
@@ -301,12 +301,12 @@ const Maintenance = () => {
             <p style={{ margin: '4px 0 18px', color: 'var(--text-muted)', fontSize: 13 }}>Itens em manutencao que ainda precisam de ticket formal.</p>
             <div style={{ display: 'grid', gap: 10 }}>
               {pendingTicketDevices.length > 0 ? pendingTicketPageData.visibleItems.map((device) => (
-                <button key={device.id} type="button" onClick={() => openTicketModal(device)} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(245,158,11,0.14)', background: '#fffaf0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                <button key={device.id} type="button" onClick={() => openTicketModal(device)} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: '1px solid rgba(100,116,139,0.2)', background: '#f8fafc', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getEquipmentDisplayName(device)}</div>
                     <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{normalizeSectorName(device.setor)} {device.observacoes ? `- ${device.observacoes}` : ''}</div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Sem ticket</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Sem ticket</span>
                 </button>
               )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>Todos os itens em manutencao possuem ticket.</div>}
             </div>
@@ -346,7 +346,7 @@ const Maintenance = () => {
 
             {ticketError && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'var(--danger-soft)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13 }}>Erro: {ticketError}</div>}
 
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Ticket</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Ticket</label>
             <input
               value={ticketForm.ticket}
               onChange={(event) => setTicketForm((prev) => ({ ...prev, ticket: event.target.value }))}
@@ -354,7 +354,7 @@ const Maintenance = () => {
               style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.24)', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'inherit', marginBottom: 16 }}
             />
 
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Defeito / observacao</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Defeito / observacao</label>
             <textarea
               value={ticketForm.observacoes}
               onChange={(event) => setTicketForm((prev) => ({ ...prev, observacoes: event.target.value }))}
@@ -364,7 +364,7 @@ const Maintenance = () => {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap', marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(148,163,184,0.14)' }}>
               <button type="button" onClick={closeTicketModal} style={{ padding: '10px 16px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.22)', background: '#ffffff', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: 'inherit' }}>Cancelar</button>
-              <button type="submit" disabled={ticketSaving} style={{ padding: '10px 18px', borderRadius: 12, border: 'none', background: ticketSaving ? '#94a3b8' : '#d97706', color: '#ffffff', cursor: ticketSaving ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: 'inherit' }}>{ticketSaving ? 'Salvando...' : 'Salvar ticket'}</button>
+              <button type="submit" disabled={ticketSaving} style={{ padding: '10px 18px', borderRadius: 12, border: 'none', background: ticketSaving ? '#94a3b8' : 'var(--brand)', color: '#ffffff', cursor: ticketSaving ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: 'inherit' }}>{ticketSaving ? 'Salvando...' : 'Salvar ticket'}</button>
             </div>
           </form>
         </div>

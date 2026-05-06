@@ -51,7 +51,7 @@ export const SECTORS = [
   'PTS',
 ];
 
-const maintenanceTone = { bg: '#fef3c7', text: '#b45309', border: 'rgba(245, 158, 11, 0.24)' };
+const maintenanceTone = { bg: '#e2e8f0', text: '#334155', border: 'rgba(100, 116, 139, 0.26)' };
 
 export const STATUS_COLORS = {
   Ativo: { bg: '#dcfce7', text: '#166534', border: 'rgba(34, 197, 94, 0.22)' },
