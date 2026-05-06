@@ -6,7 +6,6 @@
 import axios from 'axios';
 
 const DEFAULT_LOCAL_API_URL = 'http://localhost:3001/api';
-const DEFAULT_PRODUCTION_API_URL = 'https://seu-backend.onrender.com/api';
 
 const normalizeApiUrl = (value = '') => value.replace(/\/+$/, '');
 
@@ -54,10 +53,10 @@ const resolveApiBaseUrl = () => {
   }
 
   if (hostname.endsWith('.vercel.app')) {
-    return DEFAULT_PRODUCTION_API_URL;
+    return '';
   }
 
-  return DEFAULT_PRODUCTION_API_URL;
+  return '';
 };
 
 const API_BASE_URL = resolveApiBaseUrl();
@@ -75,6 +74,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const message =
+      (!API_BASE_URL
+        ? 'URL da API nao configurada. Configure REACT_APP_API_URL no Vercel apontando para o backend.'
+        : null) ||
       error.response?.data?.message ||
       (error.message === 'Network Error'
         ? 'Falha de comunicacao com o backend. Verifique a URL da API ou o CORS no Render.'

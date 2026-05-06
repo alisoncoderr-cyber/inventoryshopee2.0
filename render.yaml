@@ -22,3 +22,9 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      - key: AUTH_USERNAME
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
