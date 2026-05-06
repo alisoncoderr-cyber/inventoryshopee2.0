@@ -46,6 +46,7 @@ const sanitizeDevicePayload = (payload = {}) => ({
   status: normalizeStatus(payload.status),
   ticket: payload.ticket?.trim() || '',
   data_aquisicao: payload.data_aquisicao || '',
+  data_inicio_manutencao: payload.data_inicio_manutencao || '',
   observacoes: payload.observacoes?.trim() || '',
 });
 
@@ -167,6 +168,7 @@ const createDevice = async (req, res) => {
       status,
       ticket,
       data_aquisicao,
+      data_inicio_manutencao,
       observacoes,
     } = sanitized;
 
@@ -214,6 +216,7 @@ const createDevice = async (req, res) => {
       ticket,
       data_aquisicao,
       data_cadastro: new Date().toISOString().split('T')[0],
+      data_inicio_manutencao,
       observacoes,
     };
 
@@ -269,6 +272,7 @@ const createDevicesBulk = async (req, res) => {
         status,
         ticket,
         data_aquisicao,
+        data_inicio_manutencao,
         observacoes,
       } = sanitized;
 
@@ -324,6 +328,7 @@ const createDevicesBulk = async (req, res) => {
         ticket,
         data_aquisicao,
         data_cadastro: new Date().toISOString().split('T')[0],
+        data_inicio_manutencao,
         observacoes,
       });
     }

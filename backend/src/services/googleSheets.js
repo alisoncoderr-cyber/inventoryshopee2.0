@@ -26,6 +26,7 @@ const HEADERS = [
   'data_cadastro',
   'observacoes',
   'pessoa_atribuida',
+  'data_inicio_manutencao',
 ];
 
 const HEADER_LABELS = [
@@ -42,9 +43,10 @@ const HEADER_LABELS = [
   'Data de Cadastro',
   'Observacoes',
   'Pessoa Atribuida',
+  'Data Inicio Manutencao',
 ];
 
-const COLUMN_WIDTHS = [210, 220, 180, 120, 160, 180, 140, 130, 120, 130, 130, 260, 180];
+const COLUMN_WIDTHS = [210, 220, 180, 120, 160, 180, 140, 130, 120, 130, 130, 260, 180, 150];
 const VISIBLE_DATA_FIELDS = [
   'tipo',
   'marca',
@@ -57,6 +59,7 @@ const VISIBLE_DATA_FIELDS = [
   'data_cadastro',
   'observacoes',
   'pessoa_atribuida',
+  'data_inicio_manutencao',
 ];
 
 const getSheetRange = (range) => {
@@ -198,7 +201,7 @@ const hasVisibleData = (device) =>
 const loadSheetRows = async (sheets) => {
   const response = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
-    ranges: [getSheetRange('A1:M')],
+    ranges: [getSheetRange('A1:N')],
     includeGridData: true,
   });
 
@@ -241,7 +244,7 @@ const clearOrphanMetadataRows = async (sheets, rowNumbers) => {
   await sheets.spreadsheets.values.batchClear({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
-      ranges: rowNumbers.map((rowNumber) => getSheetRange(`A${rowNumber}:M${rowNumber}`)),
+      ranges: rowNumbers.map((rowNumber) => getSheetRange(`A${rowNumber}:N${rowNumber}`)),
     },
   });
 };
@@ -496,7 +499,7 @@ const initializeSheet = async () => {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: getSheetRange('A1:M1'),
+        range: getSheetRange('A1:N1'),
       });
 
       const existingHeaders = response.data.values?.[0] || [];
@@ -504,7 +507,7 @@ const initializeSheet = async () => {
       if (existingHeaders.length === 0) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
-          range: getSheetRange('A1:M1'),
+          range: getSheetRange('A1:N1'),
           valueInputOption: 'RAW',
           requestBody: {
             values: [HEADER_LABELS],
@@ -515,12 +518,14 @@ const initializeSheet = async () => {
         const normalizedHeaders = existingHeaders.map((value) =>
           String(value).trim().toLowerCase()
         );
-        const needsFriendlyHeaders = normalizedHeaders.some((value) => HEADERS.includes(value));
+        const needsFriendlyHeaders =
+          normalizedHeaders.some((value) => HEADERS.includes(value)) ||
+          existingHeaders.length < HEADER_LABELS.length;
 
         if (needsFriendlyHeaders) {
           await sheets.spreadsheets.values.update({
             spreadsheetId: SPREADSHEET_ID,
-            range: getSheetRange('A1:M1'),
+            range: getSheetRange('A1:N1'),
             valueInputOption: 'RAW',
             requestBody: {
               values: [HEADER_LABELS],
@@ -565,7 +570,7 @@ const createDevice = async (device) => {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:M'),
+    range: getSheetRange('A:N'),
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
@@ -583,7 +588,7 @@ const createDevicesBulk = async (devices) => {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange('A:M'),
+    range: getSheetRange('A:N'),
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
@@ -608,7 +613,7 @@ const updateDevice = async (id, updatedData) => {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: getSheetRange(`A${sheetRowNumber}:M${sheetRowNumber}`),
+    range: getSheetRange(`A${sheetRowNumber}:N${sheetRowNumber}`),
     valueInputOption: 'RAW',
     requestBody: {
       values: [updatedRow],

@@ -57,6 +57,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     status: 'Ativo',
     ticket: '',
     data_aquisicao: '',
+    data_inicio_manutencao: '',
     observacoes: '',
   });
 
@@ -84,6 +85,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
         status: device.status || 'Ativo',
         ticket: device.ticket || '',
         data_aquisicao: device.data_aquisicao || '',
+        data_inicio_manutencao: device.data_inicio_manutencao || '',
         observacoes: device.observacoes || '',
       });
       setBulkSerials('');

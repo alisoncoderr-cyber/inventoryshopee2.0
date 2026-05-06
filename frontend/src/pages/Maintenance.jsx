@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { updateDevice } from '../services/api';
 import { getInventoryDevices } from '../services/inventoryCache';
-import { STATUS_COLORS } from '../utils/constants';
+import { EQUIPMENT_TYPES, SECTORS, STATUS_COLORS } from '../utils/constants';
 import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
 
 const cardStyle = {
@@ -33,6 +33,26 @@ const tableCellStyle = {
 
 const MAINTENANCE_PAGE_SIZE = 8;
 const PENDING_TICKET_PAGE_SIZE = 6;
+
+const todayDate = () => new Date().toISOString().split('T')[0];
+
+const getDaysInMaintenance = (dateValue = '') => {
+  if (!dateValue) return null;
+
+  const startDate = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(startDate.getTime())) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((today - startDate) / 86400000));
+};
+
+const formatDaysInMaintenance = (dateValue = '') => {
+  const days = getDaysInMaintenance(dateValue);
+  if (days === null) return 'Nao informado';
+  if (days === 0) return 'Hoje';
+  return `${days} dia(s)`;
+};
 
 const pageButtonStyle = {
   width: 34,
@@ -134,11 +154,12 @@ const Maintenance = () => {
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
   const [ticketDevice, setTicketDevice] = useState(null);
-  const [ticketForm, setTicketForm] = useState({ ticket: '', observacoes: '' });
+  const [ticketForm, setTicketForm] = useState({ ticket: '', data_inicio_manutencao: todayDate(), observacoes: '' });
   const [ticketSaving, setTicketSaving] = useState(false);
   const [ticketError, setTicketError] = useState('');
   const [maintenancePage, setMaintenancePage] = useState(1);
   const [pendingTicketPage, setPendingTicketPage] = useState(1);
+  const [filters, setFilters] = useState({ search: '', type: 'all', sector: 'all', ticket: 'all', sort: 'oldest' });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
@@ -165,14 +186,18 @@ const Maintenance = () => {
 
   const openTicketModal = (device) => {
     setTicketDevice(device);
-    setTicketForm({ ticket: device.ticket || '', observacoes: device.observacoes || '' });
+    setTicketForm({
+      ticket: device.ticket || '',
+      data_inicio_manutencao: device.data_inicio_manutencao || todayDate(),
+      observacoes: device.observacoes || '',
+    });
     setTicketError('');
   };
 
   const closeTicketModal = () => {
     if (ticketSaving) return;
     setTicketDevice(null);
-    setTicketForm({ ticket: '', observacoes: '' });
+    setTicketForm({ ticket: '', data_inicio_manutencao: todayDate(), observacoes: '' });
     setTicketError('');
   };
 
@@ -192,6 +217,7 @@ const Maintenance = () => {
       await updateDevice(ticketDevice.id, {
         ...ticketDevice,
         ticket: ticketForm.ticket.trim(),
+        data_inicio_manutencao: ticketForm.data_inicio_manutencao,
         observacoes: ticketForm.observacoes.trim(),
       });
       await loadDevices();
@@ -204,6 +230,48 @@ const Maintenance = () => {
   };
 
   const maintenanceDevices = useMemo(() => sortDevices(devices.filter((device) => isMaintenanceStatus(device.status)), 'recent'), [devices]);
+  const filteredMaintenanceDevices = useMemo(() => {
+    const searchTerm = filters.search.trim().toLowerCase();
+
+    const filtered = maintenanceDevices.filter((device) => {
+      const matchesSearch = !searchTerm || [
+        device.nome_dispositivo,
+        device.tipo,
+        device.numero_serie,
+        device.setor,
+        device.ticket,
+        device.observacoes,
+        device.pessoa_atribuida,
+      ].some((value) => String(value || '').toLowerCase().includes(searchTerm));
+      const matchesType = filters.type === 'all' || device.tipo === filters.type;
+      const matchesSector = filters.sector === 'all' || normalizeSectorName(device.setor) === filters.sector;
+      const hasTicket = Boolean(String(device.ticket || '').trim());
+      const matchesTicket =
+        filters.ticket === 'all' ||
+        (filters.ticket === 'with' && hasTicket) ||
+        (filters.ticket === 'without' && !hasTicket);
+
+      return matchesSearch && matchesType && matchesSector && matchesTicket;
+    });
+
+    if (filters.sort === 'newest') {
+      return filtered.sort((a, b) => (b.data_inicio_manutencao || '').localeCompare(a.data_inicio_manutencao || ''));
+    }
+
+    if (filters.sort === 'type') {
+      return filtered.sort((a, b) => (a.tipo || '').localeCompare(b.tipo || ''));
+    }
+
+    return filtered.sort((a, b) => {
+      const daysA = getDaysInMaintenance(a.data_inicio_manutencao);
+      const daysB = getDaysInMaintenance(b.data_inicio_manutencao);
+
+      if (daysA === null && daysB === null) return 0;
+      if (daysA === null) return 1;
+      if (daysB === null) return -1;
+      return daysB - daysA;
+    });
+  }, [filters, maintenanceDevices]);
   const pendingTicketDevices = useMemo(() => maintenanceDevices.filter((device) => !String(device.ticket || '').trim()), [maintenanceDevices]);
   const maintenanceBySector = useMemo(() => {
     const grouped = maintenanceDevices.reduce((acc, device) => {
@@ -218,10 +286,25 @@ const Maintenance = () => {
   }, [maintenanceDevices]);
 
   const topSector = maintenanceBySector[0];
+  const maintenanceTypeOptions = useMemo(() => {
+    const values = new Set([...EQUIPMENT_TYPES, ...maintenanceDevices.map((device) => device.tipo).filter(Boolean)]);
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [maintenanceDevices]);
+  const maintenanceSectorOptions = useMemo(() => {
+    const values = new Set([...SECTORS, ...maintenanceDevices.map((device) => normalizeSectorName(device.setor)).filter(Boolean)]);
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [maintenanceDevices]);
   const withTicketCount = maintenanceDevices.filter((device) => String(device.ticket || '').trim()).length;
-  const assignedCount = maintenanceDevices.filter((device) => String(device.pessoa_atribuida || '').trim()).length;
-  const maintenancePageData = getPageItems(maintenanceDevices, maintenancePage, MAINTENANCE_PAGE_SIZE);
+  const oldestDays = maintenanceDevices.reduce((max, device) => {
+    const days = getDaysInMaintenance(device.data_inicio_manutencao);
+    return days === null ? max : Math.max(max, days);
+  }, 0);
+  const maintenancePageData = getPageItems(filteredMaintenanceDevices, maintenancePage, MAINTENANCE_PAGE_SIZE);
   const pendingTicketPageData = getPageItems(pendingTicketDevices, pendingTicketPage, PENDING_TICKET_PAGE_SIZE);
+
+  useEffect(() => {
+    setMaintenancePage(1);
+  }, [filters]);
 
   if (loading) return <div style={{ ...cardStyle, padding: 32, minHeight: 120 }} />;
   if (error) return <div style={{ ...cardStyle, padding: 24, color: '#b91c1c', background: 'var(--danger-soft)', borderColor: 'rgba(239,68,68,0.2)' }}>Erro ao carregar manutencao: {error}</div>;
@@ -247,7 +330,7 @@ const Maintenance = () => {
         <KpiCard label="Fila total" value={maintenanceDevices.length} helper="equipamentos atualmente em manutencao" />
         <KpiCard label="Com ticket" value={withTicketCount} helper="itens com chamado registrado" />
         <KpiCard label="Sem ticket" value={pendingTicketDevices.length} helper="itens que pedem formalizacao" />
-        <KpiCard label="Com responsavel" value={assignedCount} helper="equipamentos ligados a uma pessoa" />
+        <KpiCard label="Mais antigo" value={`${oldestDays}d`} helper="maior tempo parado informado" />
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1.25fr) minmax(320px, .75fr)', gap: 20 }}>
@@ -256,13 +339,39 @@ const Maintenance = () => {
             <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Fila de manutencao</h2>
             <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Lista de equipamentos que estao fora da operacao por manutencao.</p>
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(180px, 1.4fr) repeat(4, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
+            <input
+              value={filters.search}
+              onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
+              placeholder="Buscar por serie, ticket, setor..."
+              style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(148,163,184,0.24)', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit' }}
+            />
+            <select value={filters.type} onChange={(event) => setFilters((prev) => ({ ...prev, type: event.target.value }))} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(148,163,184,0.24)', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', background: '#ffffff' }}>
+              <option value="all">Todos os tipos</option>
+              {maintenanceTypeOptions.map((type) => <option key={type} value={type}>{type}</option>)}
+            </select>
+            <select value={filters.sector} onChange={(event) => setFilters((prev) => ({ ...prev, sector: event.target.value }))} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(148,163,184,0.24)', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', background: '#ffffff' }}>
+              <option value="all">Todos os setores</option>
+              {maintenanceSectorOptions.map((sector) => <option key={sector} value={sector}>{sector}</option>)}
+            </select>
+            <select value={filters.ticket} onChange={(event) => setFilters((prev) => ({ ...prev, ticket: event.target.value }))} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(148,163,184,0.24)', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', background: '#ffffff' }}>
+              <option value="all">Todos tickets</option>
+              <option value="with">Com ticket</option>
+              <option value="without">Sem ticket</option>
+            </select>
+            <select value={filters.sort} onChange={(event) => setFilters((prev) => ({ ...prev, sort: event.target.value }))} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(148,163,184,0.24)', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', background: '#ffffff' }}>
+              <option value="oldest">Mais tempo parado</option>
+              <option value="newest">Data mais recente</option>
+              <option value="type">Tipo A-Z</option>
+            </select>
+          </div>
           <div style={{ borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(148,163,184,0.18)' }}>
-            {maintenanceDevices.length > 0 ? (
+            {filteredMaintenanceDevices.length > 0 ? (
               <div style={{ overflowX: 'auto', background: '#ffffff' }}>
-                <table style={{ width: '100%', minWidth: 900, borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', minWidth: 1120, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      {['Equipamento', 'Serie', 'Setor', 'Ticket', 'Responsavel', 'Cadastro', 'Status'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
+                      {['Equipamento', 'Serie', 'Tipo', 'Setor', 'Ticket', 'Inicio manut.', 'Dias parado', 'Responsavel', 'Status'].map((header) => <th key={header} style={tableHeaderStyle}>{header}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -273,20 +382,22 @@ const Maintenance = () => {
                           <div style={{ marginTop: 3, fontSize: 12, color: 'var(--text-muted)' }}>{device.marca || device.modelo ? [device.marca, device.modelo].filter(Boolean).join(' ') : 'Sem detalhes'}</div>
                         </td>
                         <td style={{ ...tableCellStyle, fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{device.numero_serie || '-'}</td>
+                        <td style={tableCellStyle}>{device.tipo || '-'}</td>
                         <td style={tableCellStyle}>{normalizeSectorName(device.setor)}</td>
                         <td style={{ ...tableCellStyle, color: device.ticket ? 'var(--brand)' : '#64748b', fontWeight: device.ticket ? 700 : 500 }}>{device.ticket || 'Nao informado'}</td>
+                        <td style={tableCellStyle}>{device.data_inicio_manutencao || 'Nao informado'}</td>
+                        <td style={{ ...tableCellStyle, fontWeight: 800, color: getDaysInMaintenance(device.data_inicio_manutencao) >= 7 ? '#b91c1c' : 'var(--text-secondary)' }}>{formatDaysInMaintenance(device.data_inicio_manutencao)}</td>
                         <td style={tableCellStyle}>{device.pessoa_atribuida || '-'}</td>
-                        <td style={tableCellStyle}>{device.data_cadastro || '-'}</td>
                         <td style={tableCellStyle}><StatusBadge status={device.status} /></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            ) : <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento em manutencao no momento.</div>}
+            ) : <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento em manutencao encontrado com os filtros atuais.</div>}
           </div>
           <PaginationControls
-            totalItems={maintenanceDevices.length}
+            totalItems={filteredMaintenanceDevices.length}
             page={maintenancePageData.safePage}
             totalPages={maintenancePageData.totalPages}
             startIndex={maintenancePageData.startIndex}
@@ -352,6 +463,14 @@ const Maintenance = () => {
               value={ticketForm.ticket}
               onChange={(event) => setTicketForm((prev) => ({ ...prev, ticket: event.target.value }))}
               placeholder="Ex: TKT-2026-001"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.24)', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'inherit', marginBottom: 16 }}
+            />
+
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Data inicio manutencao</label>
+            <input
+              type="date"
+              value={ticketForm.data_inicio_manutencao}
+              onChange={(event) => setTicketForm((prev) => ({ ...prev, data_inicio_manutencao: event.target.value }))}
               style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.24)', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'inherit', marginBottom: 16 }}
             />
 
