@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Dashboard from './pages/Dashboard';
 import Devices from './pages/Devices';
 import Maintenance from './pages/Maintenance';
+import { fetchSession, login, logout } from './services/api';
 
 const DashboardIcon = ({ active }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -74,12 +75,101 @@ const PageLoader = ({ label }) => (
   </div>
 );
 
+const LoginScreen = ({ onLogin }) => {
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await login(form);
+      onLogin(result.user);
+    } catch (err) {
+      setError(err.message || 'Nao foi possivel entrar.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: 'linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%)' }}>
+      <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 380, padding: 28, borderRadius: 18, background: '#ffffff', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 10, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+            <img src="/shopee-icon.webp" alt="Shopee" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 20, color: 'var(--text-primary)' }}>Inventario SOC-PE2</h1>
+            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>Acesso restrito</p>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'var(--danger-soft)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Usuario</label>
+        <input
+          value={form.username}
+          onChange={(event) => setForm((prev) => ({ ...prev, username: event.target.value }))}
+          autoComplete="username"
+          style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.26)', color: 'var(--text-primary)', fontSize: 14, marginBottom: 14 }}
+        />
+
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Senha</label>
+        <input
+          type="password"
+          value={form.password}
+          onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
+          autoComplete="current-password"
+          style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(148,163,184,0.26)', color: 'var(--text-primary)', fontSize: 14 }}
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ width: '100%', marginTop: 20, padding: '12px 16px', borderRadius: 12, border: 'none', background: loading ? '#94a3b8' : 'var(--brand)', color: '#ffffff', fontSize: 14, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer' }}
+        >
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
 function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [pageLoading, setPageLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 960);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 960);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [user, setUser] = useState(null);
   const pageLoadingTimer = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchSession()
+      .then((session) => {
+        if (mounted && session.authenticated) setUser(session.user);
+      })
+      .catch(() => {
+        if (mounted) setUser(null);
+      })
+      .finally(() => {
+        if (mounted) setAuthChecking(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -109,6 +199,12 @@ function App() {
     if (pageLoadingTimer.current) window.clearTimeout(pageLoadingTimer.current);
   }, []);
 
+  const handleLogout = async () => {
+    await logout().catch(() => null);
+    setUser(null);
+    setActivePage('dashboard');
+  };
+
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
@@ -121,6 +217,14 @@ function App() {
         return <Dashboard />;
     }
   };
+
+  if (authChecking) {
+    return <PageLoader label="sistema" />;
+  }
+
+  if (!user) {
+    return <LoginScreen onLogin={setUser} />;
+  }
 
   return (
     <div
@@ -311,6 +415,9 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 4px rgba(34,197,94,0.14)' }} />
             {!isMobile && <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>Operacao ativa</span>}
+            <button onClick={handleLogout} style={{ marginLeft: 8, border: '1px solid var(--panel-border)', background: '#ffffff', color: 'var(--text-secondary)', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+              Sair
+            </button>
           </div>
         </header>
 
