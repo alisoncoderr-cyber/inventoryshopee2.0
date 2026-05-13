@@ -63,7 +63,6 @@ const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -137,25 +136,6 @@ export const fetchDashboardStats = async () => {
     headers: { 'Cache-Control': 'no-cache' },
   });
 
-  return response.data;
-};
-
-export const fetchSession = async () => {
-  const response = await api.get('/auth/session', {
-    params: { _ts: Date.now() },
-    headers: { 'Cache-Control': 'no-cache' },
-  });
-
-  return response.data;
-};
-
-export const login = async ({ username, password }) => {
-  const response = await api.post('/auth/login', { username, password });
-  return response.data;
-};
-
-export const logout = async () => {
-  const response = await api.post('/auth/logout');
   return response.data;
 };
 

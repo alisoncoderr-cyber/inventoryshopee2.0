@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const authRouter = require('./routes/auth');
 const devicesRouter = require('./routes/devices');
-const { requireAuth } = require('./middleware/auth');
 const {
   getServiceStatus,
   SheetsServiceUnavailableError,
@@ -20,7 +18,6 @@ const createCorsMiddleware = () =>
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
-    credentials: true,
   });
 
 const createApp = () => {
@@ -49,8 +46,7 @@ const createApp = () => {
     });
   });
 
-  app.use('/api', authRouter);
-  app.use('/api', requireAuth, devicesRouter);
+  app.use('/api', devicesRouter);
 
   app.use((req, res) => {
     res.status(404).json({
