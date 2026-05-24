@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { updateDevice } from '../services/api';
-import { getInventoryDevices } from '../services/inventoryCache';
+import { getInventoryDevices, invalidateInventoryCache } from '../services/inventoryCache';
 import { EQUIPMENT_TYPES, SECTORS, STATUS_COLORS } from '../utils/constants';
 import { isMaintenanceStatus, normalizeSectorName, sortDevices } from '../utils/deviceHelpers';
 
@@ -167,11 +167,11 @@ const Maintenance = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const loadDevices = async () => {
+  const loadDevices = async (options = {}) => {
     try {
       setLoading(true);
       setError('');
-      const inventoryDevices = await getInventoryDevices({ force: true });
+      const inventoryDevices = await getInventoryDevices(options);
       setDevices(inventoryDevices);
     } catch (err) {
       setError(err.message || 'Erro ao carregar manutencao');
@@ -220,7 +220,8 @@ const Maintenance = () => {
         data_inicio_manutencao: ticketForm.data_inicio_manutencao,
         observacoes: ticketForm.observacoes.trim(),
       });
-      await loadDevices();
+      invalidateInventoryCache();
+      await loadDevices({ force: true });
       closeTicketModal();
     } catch (err) {
       setTicketError(err.message || 'Erro ao salvar ticket');

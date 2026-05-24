@@ -70,6 +70,7 @@ const getSheetRange = (range) => {
 const normalizePrivateKey = (privateKey = '') => privateKey.replace(/\\n/g, '\n').trim();
 const normalizeSerial = (value = '') => String(value).trim().toLowerCase();
 const SERVICE_UNAVAILABLE_STATUS = 503;
+const DEVICES_CACHE_TTL_MS = Number(process.env.DEVICES_CACHE_TTL_MS || 60 * 1000);
 
 const serviceState = {
   ready: false,
@@ -80,6 +81,9 @@ const serviceState = {
 };
 
 let initializationPromise = null;
+let devicesCache = null;
+let devicesCacheTimestamp = 0;
+let devicesCachePromise = null;
 
 class SheetsServiceUnavailableError extends Error {
   constructor(message, cause = null) {
@@ -181,6 +185,18 @@ const rowToObject = (row) => {
 };
 
 const objectToRow = (obj) => HEADERS.map((header) => obj[header] || '');
+const cloneDevice = (device) => ({ ...device });
+const cloneDevices = (devices = []) => devices.map(cloneDevice);
+const stripRowMetadata = ({ _rowNumber, ...device }) => device;
+
+const isDevicesCacheFresh = () =>
+  devicesCache && Date.now() - devicesCacheTimestamp < DEVICES_CACHE_TTL_MS;
+
+const invalidateDevicesCache = () => {
+  devicesCache = null;
+  devicesCacheTimestamp = 0;
+  devicesCachePromise = null;
+};
 
 const getCellString = (cell) => {
   if (!cell) return '';
@@ -432,9 +448,37 @@ const ensureSheetFormatting = async (sheets, sheetId) => {
   });
 };
 
-const getAllDevices = async () => {
-  const devices = await getDevicesFromSheet();
-  return devices.map(({ _rowNumber, ...device }) => device);
+const getAllDevices = async ({ force = false } = {}) => {
+  if (!force && isDevicesCacheFresh()) {
+    return cloneDevices(devicesCache);
+  }
+
+  if (!force && devicesCachePromise) {
+    return devicesCachePromise.then(cloneDevices);
+  }
+
+  devicesCachePromise = getDevicesFromSheet()
+    .then((devices) => {
+      devicesCache = devices.map(stripRowMetadata);
+      devicesCacheTimestamp = Date.now();
+      return devicesCache;
+    })
+    .catch((error) => {
+      if (devicesCache) {
+        console.warn(
+          'Falha ao atualizar cache de equipamentos; usando ultima leitura valida:',
+          error.message
+        );
+        return devicesCache;
+      }
+
+      throw error;
+    })
+    .finally(() => {
+      devicesCachePromise = null;
+    });
+
+  return devicesCachePromise.then(cloneDevices);
 };
 
 const getDeviceById = async (id) => {
@@ -578,6 +622,7 @@ const createDevice = async (device) => {
     },
   });
 
+  invalidateDevicesCache();
   return device;
 };
 
@@ -596,6 +641,7 @@ const createDevicesBulk = async (devices) => {
     },
   });
 
+  invalidateDevicesCache();
   return devices;
 };
 
@@ -620,6 +666,7 @@ const updateDevice = async (id, updatedData) => {
     },
   });
 
+  invalidateDevicesCache();
   return mergedDevice;
 };
 
@@ -658,6 +705,7 @@ const deleteDevice = async (id) => {
     },
   });
 
+  invalidateDevicesCache();
   return true;
 };
 
@@ -669,6 +717,7 @@ module.exports = {
   createDevicesBulk,
   updateDevice,
   deleteDevice,
+  invalidateDevicesCache,
   getServiceStatus,
   initializeSheet,
   SheetsServiceUnavailableError,
