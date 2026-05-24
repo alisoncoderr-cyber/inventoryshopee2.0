@@ -34,7 +34,6 @@ const MaintenanceIcon = ({ active }) => (
 );
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
   { id: 'devices', label: 'Equipamentos', icon: DevicesIcon },
   { id: 'maintenance', label: 'Manutencao', icon: MaintenanceIcon },
 ];
@@ -75,7 +74,7 @@ const PageLoader = ({ label }) => (
 );
 
 function App() {
-  const [activePage, setActivePage] = useState('dashboard');
+  const [activePage, setActivePage] = useState('devices');
   const [pageLoading, setPageLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 960);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 960);
