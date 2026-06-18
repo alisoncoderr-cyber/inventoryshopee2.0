@@ -3,7 +3,7 @@
 // Formulario de criacao e edicao de equipamentos
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createDevice, createDevicesBulk, updateDevice } from '../services/api';
 import { invalidateInventoryCache } from '../services/inventoryCache';
 import { EQUIPMENT_TYPES, SECTORS, STATUS_OPTIONS } from '../utils/constants';
@@ -65,6 +65,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [bulkSerials, setBulkSerials] = useState('');
+  const [equipmentTypeSearch, setEquipmentTypeSearch] = useState('');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -161,6 +162,19 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   };
 
   const showAssignedPersonField = formData.tipo === 'Laptop';
+
+  const filteredEquipmentTypes = useMemo(() => {
+    const term = equipmentTypeSearch.trim().toLowerCase();
+    const filtered = term
+      ? EQUIPMENT_TYPES.filter((type) => type.toLowerCase().includes(term))
+      : EQUIPMENT_TYPES;
+
+    if (formData.tipo && !filtered.includes(formData.tipo)) {
+      return [formData.tipo, ...filtered];
+    }
+
+    return filtered;
+  }, [equipmentTypeSearch, formData.tipo]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -286,6 +300,28 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
             <Field label="Tipo de Equipamento" required>
+              <div style={{ position: 'relative', marginBottom: 8 }}>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 13,
+                    color: 'var(--text-muted)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  &#128269;
+                </span>
+                <input
+                  style={{ ...inputStyle, paddingLeft: 36 }}
+                  value={equipmentTypeSearch}
+                  onChange={(event) => setEquipmentTypeSearch(event.target.value)}
+                  placeholder="Pesquisar equipamento"
+                />
+              </div>
               <select
                 style={{ ...inputStyle, borderColor: errors.tipo ? '#ef4444' : 'rgba(148,163,184,0.24)' }}
                 name="tipo"
@@ -293,7 +329,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
                 onChange={handleChange}
               >
                 <option value="">Selecione o tipo</option>
-                {EQUIPMENT_TYPES.map((type) => (
+                {filteredEquipmentTypes.map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
