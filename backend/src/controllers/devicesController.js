@@ -252,6 +252,7 @@ const createDevicesBulk = async (req, res) => {
 
     const preparedDevices = [];
     const seenSerials = new Set();
+    const ignoredDevices = [];
     const existingDevices = await sheetsService.getAllDevices();
     const existingSerials = new Set(
       existingDevices
@@ -301,17 +302,20 @@ const createDevicesBulk = async (req, res) => {
 
       const serialKey = normalizeSerialKey(numero_serie);
       if (seenSerials.has(serialKey)) {
-        return res.status(400).json({
-          success: false,
-          message: `Numero de serie duplicado no lote: ${numero_serie}`,
+        ignoredDevices.push({
+          numero_serie,
+          reason: 'Duplicado no lote',
         });
+        continue;
       }
 
       if (existingSerials.has(serialKey)) {
-        return res.status(409).json({
-          success: false,
-          message: `O numero de serie ${numero_serie} ja esta cadastrado`,
+        ignoredDevices.push({
+          numero_serie,
+          reason: 'Ja cadastrado',
         });
+        seenSerials.add(serialKey);
+        continue;
       }
 
       seenSerials.add(serialKey);
@@ -333,12 +337,27 @@ const createDevicesBulk = async (req, res) => {
       });
     }
 
-    const createdDevices = await sheetsService.createDevicesBulk(preparedDevices);
+    const createdDevices = preparedDevices.length > 0
+      ? await sheetsService.createDevicesBulk(preparedDevices)
+      : [];
 
-    res.status(201).json({
+    const createdCount = createdDevices.length;
+    const ignoredCount = ignoredDevices.length;
+    const statusCode = createdCount > 0 ? 201 : 200;
+
+    res.status(statusCode).json({
       success: true,
-      message: `${createdDevices.length} equipamento(s) cadastrado(s) com sucesso`,
+      message:
+        ignoredCount > 0
+          ? `${createdCount} equipamento(s) cadastrado(s); ${ignoredCount} repetido(s) ignorado(s)`
+          : `${createdCount} equipamento(s) cadastrado(s) com sucesso`,
       data: createdDevices,
+      meta: {
+        requested: devices.length,
+        created: createdCount,
+        ignored: ignoredCount,
+        ignoredDevices,
+      },
     });
   } catch (error) {
     handleControllerError(

@@ -115,6 +115,17 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
       .map((serial) => serial.trim())
       .filter(Boolean);
 
+  const getUniqueBulkSerialList = () => {
+    const seen = new Set();
+
+    return getBulkSerialList().filter((serial) => {
+      const serialKey = serial.toLowerCase();
+      if (seen.has(serialKey)) return false;
+      seen.add(serialKey);
+      return true;
+    });
+  };
+
   const validate = () => {
     const required = ['tipo', 'marca', 'modelo', 'setor'];
     const nextErrors = {};
@@ -133,7 +144,7 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
   };
 
   const buildBulkDevices = () => {
-    const serialList = getBulkSerialList();
+    const serialList = getUniqueBulkSerialList();
     const normalizedFormData = {
       ...formData,
       nome_dispositivo: formData.tipo,
@@ -164,23 +175,23 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
     setApiError('');
 
     try {
+      let result;
+
       if (isEditing) {
-        await updateDevice(device.id, {
+        result = await updateDevice(device.id, {
           ...formData,
           nome_dispositivo: formData.tipo,
         });
       } else {
         const devicesToCreate = buildBulkDevices();
 
-        if (devicesToCreate.length === 1) {
-          await createDevice(devicesToCreate[0]);
-        } else {
-          await createDevicesBulk(devicesToCreate);
-        }
+        result = devicesToCreate.length === 1 && getBulkSerialList().length === 0
+          ? await createDevice(devicesToCreate[0])
+          : await createDevicesBulk(devicesToCreate);
       }
 
       invalidateInventoryCache();
-      onSuccess();
+      onSuccess(result);
     } catch (err) {
       setApiError(err.message || 'Erro ao salvar equipamento');
     } finally {
@@ -201,7 +212,6 @@ const DeviceForm = ({ device, onClose, onSuccess }) => {
         zIndex: 1000,
         padding: 16,
       }}
-      onClick={(event) => event.target === event.currentTarget && onClose()}
     >
       <div
         style={{

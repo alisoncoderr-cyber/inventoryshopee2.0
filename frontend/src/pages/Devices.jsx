@@ -109,6 +109,7 @@ const Devices = () => {
   const [baseDevices, setBaseDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successNotice, setSuccessNotice] = useState('');
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900);
   const [search, setSearch] = useState('');
@@ -136,14 +137,14 @@ const Devices = () => {
 
   const loadInventoryData = useCallback(async (options = {}) => {
     try {
-      setLoading(true);
+      if (!options.silent) setLoading(true);
       setError('');
       const inventoryDevices = await getInventoryDevices(options);
       setBaseDevices(inventoryDevices);
     } catch (err) {
       setError(err.message || 'Erro ao carregar equipamentos');
     } finally {
-      setLoading(false);
+      if (!options.silent) setLoading(false);
     }
   }, []);
 
@@ -245,10 +246,36 @@ const Devices = () => {
     setEditingDevice(null);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (result) => {
     handleFormClose();
+    const savedDevices = Array.isArray(result?.data)
+      ? result.data
+      : result?.data
+        ? [result.data]
+        : [];
+    const ignoredCount = result?.meta?.ignored || 0;
+    const createdCount = result?.meta?.created;
+    const ignoredExamples = result?.meta?.ignoredDevices
+      ?.slice(0, 4)
+      .map((item) => item.numero_serie)
+      .join(', ');
+
+    setSuccessNotice(
+      ignoredCount > 0
+        ? `${createdCount || 0} equipamento(s) cadastrado(s). ${ignoredCount} numero(s) de serie repetido(s) foram ignorados${ignoredExamples ? `: ${ignoredExamples}` : ''}.`
+        : result?.message || 'Equipamento salvo com sucesso.'
+    );
+
+    if (savedDevices.length > 0) {
+      setBaseDevices((currentDevices) => {
+        const nextById = new Map(currentDevices.map((item) => [item.id, item]));
+        savedDevices.forEach((item) => nextById.set(item.id, item));
+        return Array.from(nextById.values());
+      });
+    }
+
     invalidateInventoryCache();
-    loadInventoryData({ force: true });
+    loadInventoryData({ force: true, silent: true });
   };
 
   const handleDeleteConfirm = async () => {
@@ -385,6 +412,7 @@ const Devices = () => {
         )}
 
         {error && <div style={{ marginBottom: 16, padding: 14, borderRadius: 14, background: 'var(--danger-soft)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13 }}>Erro: {error}</div>}
+        {successNotice && <div style={{ marginBottom: 16, padding: 14, borderRadius: 14, background: '#ecfdf3', border: '1px solid rgba(22,163,74,0.22)', color: '#166534', fontSize: 13, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}><span>{successNotice}</span><button type="button" onClick={() => setSuccessNotice('')} style={{ ...buttonBase, padding: '6px 10px', background: '#ffffff', color: '#166534', border: '1px solid rgba(22,163,74,0.18)' }}>Ok</button></div>}
 
         <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(100,116,139,0.18)' }}>
           {loading ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Carregando base operacional...</div> : devices.length === 0 ? <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', background: '#ffffff' }}>Nenhum equipamento encontrado com os filtros atuais.</div> : (
